@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Studyflow">
+<meta name="theme-color" content="#6d28d9">
+<link rel="manifest" href="./manifest.json">
+<title>Studyflow</title>
+<script src="https://apis.google.com/js/api.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" defer></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #09090b;
+  --bg1: #111113;
+  --bg2: #18181b;
+  --bg3: #27272a;
+  --border: #3f3f46;
+  --border2: #52525b;
+  --text: #fafafa;
+  --text2: #a1a1aa;
+  --text3: #71717a;
+  --accent: #7c3aed;
+  --accent2: #8b5cf6;
+  --accent3: #a78bfa;
+  --accent-glow: rgba(124,58,237,.25);
+  --cyan: #06b6d4;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --orange: #f97316;
+  --pink: #ec4899;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,.6);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  font-size: 14px;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── ONBOARDING ─── */
+#onboarding {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  padding: 28px 20px 60px;
+  padding-top: calc(28px + env(safe-area-inset-top,0px));
+}
+#onboarding.hidden { display: none; }
+.ob-brand {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 32px;
+}
+.ob-brand-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+.ob-brand-name {
+  font-size: 1.5rem; font-weight: 800; letter-spacing: -.04em;
+  background: linear-gradient(90deg, #fff, var(--accent3));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.ob-h { font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em; margin-bottom: 6px; }
+.ob-sub { font-size: .85rem; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
+.school-cards { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
+.school-card {
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px; cursor: pointer;
+  transition: all .2s; position: relative; overflow: hidden;
+}
+.school-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--accent-glow), transparent);
+  opacity: 0; transition: opacity .2s;
+}
+.school-card:hover, .school-card.sel { border-color: var(--accent2); }
+.school-card:hover::before, .school-card.sel::before { opacity: 1; }
+.school-card.sel { box-shadow: 0 0 0 1px var(--accent2), var(--shadow); }
+.sc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+.sc-emoji { font-size: 1.2rem; }
+.sc-name { font-size: .9rem; font-weight: 700; letter-spacing: -.02em; }
+.sc-mat { font-size: .72rem; color: var(--text3); line-height: 1.7; }
+.ob-btn {
+  margin-top: 24px; max-width: 560px; width: 100%;
+  padding: 15px; border-radius: var(--radius-lg); border: none;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  color: #fff; font-family: 'Inter', sans-serif;
+  font-size: .9rem; font-weight: 700; letter-spacing: -.01em;
+  cursor: pointer; transition: all .2s;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.ob-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 32px var(--accent-glow); }
+.ob-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(9,9,11,.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  padding-top: env(safe-area-inset-top,0px);
+  height: calc(52px + env(safe-area-inset-top,0px));
+  display: flex; align-items: flex-end; padding-bottom: 0;
+}
+.topbar-inner {
+  max-width: 1200px; margin: 0 auto; width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 12px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand-dot {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem;
+}
+.brand-name { font-size: .95rem; font-weight: 800; letter-spacing: -.03em; }
+.school-chip {
+  font-size: .68rem; font-weight: 600;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 10px; color: var(--text2);
+  cursor: pointer; transition: all .15s;
+}
+.school-chip:hover { border-color: var(--accent2); color: var(--accent3); }
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: rgba(9,9,11,.95);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 8px 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom,0px));
+  display: flex; justify-content: space-around;
+}
+.bnav {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 16px; border-radius: 10px; border: none;
+  background: transparent; color: var(--text3); cursor: pointer; transition: all .2s;
+}
+.bnav.active { color: var(--accent3); background: rgba(124,58,237,.12); }
+.bnav:hover { color: var(--text2); }
+.bnav-ico { font-size: 1.15rem; }
+.bnav-lbl { font-size: .52rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+
+/* ─── PAGES ─── */
+.page { display: none; max-width: 1200px; margin: 0 auto; padding: 16px 14px 110px; }
+.page.active { display: block; }
+
+/* ─── SECTION HEADER ─── */
+.sec-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sec-title { font-size: 1.1rem; font-weight: 800; letter-spacing: -.03em; }
+.sec-sub { font-size: .75rem; color: var(--text3); margin-top: 2px; }
+.pill-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-family: 'Inter', sans-serif; font-size: .73rem; font-weight: 600;
+  color: var(--text2); cursor: pointer; transition: all .15s;
+}
+.pill-btn:hover { border-color: var(--accent2); color: var(--accent3); }
+.pill-btn.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: transparent; color: #fff;
+}
+.pill-btn.primary:hover { box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
+
+/* ─── WEEK NAV ─── */
+.week-nav {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 10px 14px; margin-bottom: 14px;
+}
+.wk-info { flex: 1; text-align: center; }
+.wk-num { font-size: .65rem; font-weight: 700; color: var(--accent3); text-transform: uppercase; letter-spacing: .1em; }
+.wk-range { font-size: .78rem; font-weight: 600; color: var(--text); margin-top: 1px; }
+.wk-nav-btn {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text2); font-size: .9rem; transition: all .15s; flex-shrink: 0;
+}
+.wk-nav-btn:hover { border-color: var(--accent2); color: var(--text); background: var(--accent-glow); }
+.wk-nav-btn:disabled { opacity: .25; cursor: not-allowed; }
+.prog-wrap { margin-bottom: 14px; }
+.prog-bar { height: 2px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan)); border-radius: 2px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+.prog-label { font-size: .62rem; color: var(--text3); margin-top: 4px; text-align: right; }
+
+/* ─── ORARIO GRID ─── */
+.week-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; }
+@media(max-width:700px){.week-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:420px){.week-grid{grid-template-columns:repeat(2,1fr);gap:5px;}}
+.day-col { background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: border-color .2s; }
+.day-col.is-oggi { border-color: var(--accent2); box-shadow: 0 0 0 1px rgba(124,58,237,.2); }
+.day-col.is-past { opacity: .45; }
+.day-hd { padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+.day-hd.oggi-h { background: rgba(124,58,237,.12); }
+.day-gg { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text); }
+.day-dt { font-size: .6rem; color: var(--text3); margin-top: 1px; }
+.today-dot { display: inline-block; width: 5px; height: 5px; background: var(--accent2); border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+.slots { padding: 5px; display: flex; flex-direction: column; gap: 3px; }
+.slot {
+  min-height: 80px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg2); cursor: pointer; transition: all .18s;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.slot:hover { border-color: var(--accent2); background: rgba(124,58,237,.06); transform: translateY(-1px); box-shadow: var(--shadow); }
+.slot.t-verifica { border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.06); }
+.slot.t-studio { border-color: rgba(6,182,212,.5); background: rgba(6,182,212,.05); }
+.slot.t-nota { border-color: rgba(245,158,11,.5); background: rgba(245,158,11,.05); }
+.slot.t-libero { border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.04); }
+.slot-top { display: flex; align-items: center; justify-content: space-between; padding: 5px 7px 3px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.slot-ora { font-size: .58rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.slot-tag { font-size: .5rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 6px; border-radius: 20px; }
+.t-verifica .slot-tag { background: rgba(239,68,68,.2); color: #fca5a5; }
+.t-studio .slot-tag { background: rgba(6,182,212,.18); color: #67e8f9; }
+.t-nota .slot-tag { background: rgba(245,158,11,.18); color: #fcd34d; }
+.t-libero .slot-tag { background: rgba(34,197,94,.15); color: #86efac; }
+.slot-body { padding: 5px 7px 6px; flex: 1; display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+.slot-mat { font-size: .78rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
+.slot-arg { font-size: .65rem; color: var(--text2); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.slot-empty-w { display: flex; align-items: center; justify-content: center; flex: 1; }
+.slot-empty-h { font-size: .55rem; color: var(--text3); pointer-events: none; }
+
+/* ─── STUDIO DAYS ─── */
+.studio-days { display: flex; flex-direction: column; gap: 6px; }
+.sday {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; transition: all .2s;
+}
+.sday.has-data { border-color: rgba(124,58,237,.4); }
+.sday.is-oggi-s { border-color: var(--accent2); box-shadow: 0 0 0 1px rgba(124,58,237,.15); }
+.sday.is-past-s { opacity: .45; }
+.sday-row {
+  display: flex; align-items: center; padding: 14px 16px; gap: 14px;
+  background: var(--bg2); cursor: default;
+}
+.sday-row.oggi-s-r { background: rgba(124,58,237,.08); }
+.sday-date { min-width: 44px; }
+.sday-day-num { font-size: 1.6rem; font-weight: 900; line-height: 1; color: var(--text); letter-spacing: -.04em; }
+.sday-month { font-size: .58rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; }
+.sday-info { flex: 1; }
+.sday-name { font-size: .82rem; font-weight: 700; letter-spacing: -.02em; }
+.sday-chips { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+.chip {
+  font-size: .6rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  border: 1px solid transparent;
+}
+.chip-cyan { background: rgba(6,182,212,.1); color: #67e8f9; border-color: rgba(6,182,212,.2); }
+.chip-purple { background: rgba(124,58,237,.12); color: var(--accent3); border-color: rgba(124,58,237,.2); }
+.chip-green { background: rgba(34,197,94,.1); color: #86efac; border-color: rgba(34,197,94,.2); }
+.chip-empty { background: var(--bg3); color: var(--text3); }
+.open-day-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 14px;
+  font-family: 'Inter', sans-serif; font-size: .72rem; font-weight: 600;
+  color: var(--text2); cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0;
+}
+.open-day-btn:hover { border-color: var(--accent2); color: var(--accent3); background: var(--accent-glow); }
+/* time bar */
+.sday-timebar { padding: 0 16px 12px; display: none; }
+.sday.has-data .sday-timebar { display: block; }
+.tb-label { font-size: .6rem; color: var(--text3); margin-bottom: 5px; display: flex; justify-content: space-between; }
+.tb-track { height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.tb-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--cyan)); transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+/* ─── DAY PANEL ─── */
+.day-panel {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: var(--bg); overflow-y: auto;
+}
+.day-panel.open { display: block; animation: slideUp .28s cubic-bezier(.32,.72,0,1); }
+@keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:none;opacity:1;} }
+.dp-bar {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(9,9,11,.94); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border); padding: 10px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top,0px));
+  display: flex; align-items: center; gap: 10px;
+}
+.dp-back {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 9px;
+  padding: 7px 13px; font-family: 'Inter', sans-serif; font-size: .72rem; font-weight: 600;
+  color: var(--text2); cursor: pointer; transition: all .15s; flex-shrink: 0;
+}
+.dp-back:hover { border-color: var(--accent2); color: var(--text); }
+.dp-title { font-size: .95rem; font-weight: 800; letter-spacing: -.03em; flex: 1; }
+/* totale giorno */
+.dp-total {
+  font-family: 'JetBrains Mono', monospace; font-size: .82rem; font-weight: 600;
+  color: var(--accent3); background: rgba(124,58,237,.12);
+  border-radius: 8px; padding: 5px 12px;
+}
+.dp-content { max-width: 720px; margin: 0 auto; padding: 16px 14px 80px; }
+
+/* SESSIONS */
+.new-sess {
+  width: 100%; padding: 14px; border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--border2); background: transparent;
+  color: var(--accent3); font-family: 'Inter', sans-serif; font-size: .8rem; font-weight: 600;
+  cursor: pointer; transition: all .2s; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.new-sess:hover { border-color: var(--accent2); background: var(--accent-glow); }
+.sess-list { display: flex; flex-direction: column; gap: 10px; }
+
+.sess-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+  transition: border-color .2s;
+}
+.sess-card.s-active { border-color: rgba(124,58,237,.5); }
+.sess-card.s-done { border-color: rgba(34,197,94,.3); }
+.sess-hdr {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 15px; background: var(--bg2); border-bottom: 1px solid var(--border);
+}
+.sess-hdr-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+.sess-mat-ico { font-size: 1.3rem; flex-shrink: 0; }
+.sess-mat-info { overflow: hidden; }
+.sess-mat-name { font-size: .9rem; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sess-mat-time { font-size: .65rem; color: var(--text3); margin-top: 1px; font-family: 'JetBrains Mono', monospace; }
+.sess-total-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 600;
+  color: var(--cyan); background: rgba(6,182,212,.1);
+  border-radius: 6px; padding: 3px 9px; flex-shrink: 0;
+}
+.sess-status { font-size: .55rem; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
+.sess-status.run { background: rgba(124,58,237,.2); color: var(--accent3); }
+.sess-status.dn { background: rgba(34,197,94,.15); color: #86efac; }
+.sess-del { background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--text3); font-size: .8rem; padding: 4px 7px; cursor: pointer; transition: all .13s; flex-shrink: 0; }
+.sess-del:hover { border-color: rgba(239,68,68,.4); color: var(--red); background: rgba(239,68,68,.08); }
+.sess-body { padding: 15px; }
+
+/* TIMER */
+.timer-tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+.tt { flex: 1; padding: 7px; border-radius: 8px; border: none; font-family: 'Inter', sans-serif; font-size: .68rem; font-weight: 600; cursor: pointer; background: transparent; color: var(--text3); transition: all .15s; }
+.tt.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.t-disp {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 3rem; font-weight: 700;
+  text-align: center; margin: 10px 0 14px;
+  color: var(--text); transition: color .3s; letter-spacing: -.04em;
+}
+.t-disp.run { color: var(--accent3); text-shadow: 0 0 32px var(--accent-glow); }
+.t-disp.urg { color: var(--red); text-shadow: 0 0 24px rgba(239,68,68,.3); }
+.cd-row { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 14px; }
+.cd-f {
+  background: var(--bg3); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700;
+  width: 66px; text-align: center; padding: 10px 4px; outline: none; transition: border-color .15s;
+}
+.cd-f:focus { border-color: var(--accent2); }
+.cd-sep { font-size: 1.4rem; color: var(--text3); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.t-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.t-btn {
+  padding: 10px 20px; border-radius: 10px; border: none;
+  font-family: 'Inter', sans-serif; font-size: .75rem; font-weight: 600;
+  cursor: pointer; transition: all .18s; display: flex; align-items: center; gap: 6px;
+}
+.t-btn:hover { transform: translateY(-1px); }
+.tbtn-go { background: linear-gradient(135deg, var(--accent), var(--cyan)); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
+.tbtn-go:hover { box-shadow: 0 6px 24px var(--accent-glow); }
+.tbtn-pause { background: rgba(245,158,11,.15); border: 1px solid rgba(245,158,11,.3); color: var(--yellow); }
+.tbtn-stop { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.25); color: var(--red); }
+.tbtn-rst { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); }
+/* session logs */
+.sess-logs { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
+.slog { font-family: 'JetBrains Mono', monospace; font-size: .6rem; background: rgba(6,182,212,.08); color: #67e8f9; border: 1px solid rgba(6,182,212,.15); border-radius: 6px; padding: 3px 8px; }
+
+/* DRIVE ATTACH */
+.drive-section { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.drive-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.drive-label { font-size: .72rem; font-weight: 600; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+.drive-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px;
+  font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 600;
+  color: var(--text2); cursor: pointer; transition: all .15s;
+}
+.drive-btn:hover { border-color: #4285f4; color: #93c5fd; background: rgba(66,133,244,.08); }
+.drive-btn.connected { border-color: rgba(34,197,94,.4); color: #86efac; background: rgba(34,197,94,.06); }
+.drive-files { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.drive-file {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; text-decoration: none; transition: all .15s;
+}
+.drive-file:hover { border-color: var(--accent2); background: var(--accent-glow); }
+.drive-file-ico { font-size: 1rem; flex-shrink: 0; }
+.drive-file-name { font-size: .72rem; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drive-file-del { background: transparent; border: none; color: var(--text3); cursor: pointer; font-size: .75rem; padding: 2px 4px; transition: color .13s; }
+.drive-file-del:hover { color: var(--red); }
+
+/* NOTE SESSIONE */
+.sess-notes { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
+.sn-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.sn-label { font-size: .72rem; font-weight: 600; color: var(--text2); }
+.sn-actions { display: flex; align-items: center; gap: 8px; }
+.sn-ok { font-size: .65rem; color: var(--green); display: none; align-items: center; gap: 4px; }
+.sn-ok.show { display: flex; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+.sn-save {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none; border-radius: 8px; color: #fff;
+  font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 600;
+  padding: 6px 14px; cursor: pointer; transition: all .15s;
+}
+.sn-save:hover { box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
+.sn-title-inp {
+  width: 100%; background: var(--bg3); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: .9rem; font-weight: 600; letter-spacing: -.01em;
+  padding: 10px 13px; outline: none; margin-bottom: 8px; transition: border-color .15s;
+}
+.sn-title-inp:focus { border-color: var(--accent2); }
+.toolbar {
+  display: flex; gap: 2px; flex-wrap: wrap;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 8px; margin-bottom: 8px;
+}
+.tb {
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  padding: 4px 8px; color: var(--text3); cursor: pointer; font-size: .73rem;
+  transition: all .13s; font-family: 'Inter', sans-serif; font-weight: 500;
+}
+.tb:hover { background: var(--bg2); color: var(--text); border-color: var(--border); }
+.tb-sep { width: 1px; background: var(--border); margin: 2px 4px; }
+.cp-w { position: relative; display: inline-block; }
+.cp-w input[type=color] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
+.sess-ed {
+  background: var(--bg3); border: 1.5px solid var(--border);
+  border-radius: 10px; min-height: 160px; padding: 12px;
+  outline: none; color: var(--text); font-size: .84rem; line-height: 1.8;
+  transition: border-color .15s; font-family: 'Inter', sans-serif;
+}
+.sess-ed:focus { border-color: var(--accent2); }
+.sess-ed h1 { font-size: 1.2rem; font-weight: 800; margin: 6px 0; letter-spacing: -.03em; }
+.sess-ed h2 { font-size: 1rem; font-weight: 700; margin: 5px 0; letter-spacing: -.02em; }
+.sess-ed h3 { font-size: .88rem; font-weight: 700; margin: 4px 0; }
+.sess-ed ul, .sess-ed ol { padding-left: 20px; margin: 4px 0; }
+.sess-ed blockquote { border-left: 3px solid var(--accent2); padding-left: 12px; color: var(--text2); font-style: italic; margin: 6px 0; }
+.sess-ed img { max-width: 100%; border-radius: 8px; margin: 5px 0; }
+.note-saved-hint { font-size: .65rem; color: var(--text3); margin-top: 6px; display: flex; align-items: center; gap: 5px; }
+/* done btn */
+.sess-done-btn {
+  margin-top: 14px; width: 100%; padding: 11px;
+  border-radius: 10px; font-family: 'Inter', sans-serif;
+  font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+
+/* ─── APPUNTI ─── */
+.mgw.hidden { display: none; }
+.note-editor-wrap { display: none; }
+.note-editor-wrap.active { display: block; }
+.mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 8px; margin-bottom: 16px; }
+.mat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 13px;
+  cursor: pointer; transition: all .2s; text-align: center; position: relative;
+  overflow: hidden;
+}
+.mat-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--accent-glow), transparent);
+  opacity: 0; transition: opacity .2s;
+}
+.mat-card:hover { border-color: var(--accent2); transform: translateY(-2px); box-shadow: var(--shadow); }
+.mat-card:hover::before { opacity: 1; }
+.mat-ico { font-size: 1.6rem; margin-bottom: 6px; }
+.mat-name { font-size: .72rem; font-weight: 700; letter-spacing: -.01em; }
+.mat-cnt { font-size: .6rem; color: var(--text3); margin-top: 3px; }
+.mat-del {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2);
+  border-radius: 5px; color: var(--red); font-size: .62rem; padding: 2px 5px;
+  cursor: pointer; opacity: 0; transition: opacity .15s;
+}
+.mat-card:hover .mat-del { opacity: 1; }
+/* quick notes */
+.qn-bar { display: flex; gap: 7px; margin-bottom: 10px; }
+.qn-inp {
+  flex: 1; background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: .82rem; padding: 10px 13px; outline: none; transition: border-color .15s;
+}
+.qn-inp:focus { border-color: var(--accent2); }
+.qn-add {
+  background: var(--accent); border: none; border-radius: 10px; color: #fff;
+  padding: 10px 16px; font-family: 'Inter', sans-serif; font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.qn-add:hover { background: var(--accent2); }
+.qn-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 13px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 9px; margin-bottom: 5px; font-size: .78rem; color: var(--text);
+  transition: border-color .15s;
+}
+.qn-item:hover { border-color: var(--border2); }
+.qn-del { background: transparent; border: none; color: var(--text3); cursor: pointer; font-size: .8rem; padding: 2px 5px; transition: color .13s; }
+.qn-del:hover { color: var(--red); }
+/* note list */
+.note-back { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; cursor: pointer; color: var(--text3); font-size: .75rem; font-weight: 500; transition: color .15s; }
+.note-back:hover { color: var(--text); }
+.note-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.note-mat-title { font-size: 1.1rem; font-weight: 800; letter-spacing: -.03em; }
+.note-list { display: flex; flex-direction: column; gap: 7px; }
+.note-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 13px 14px; cursor: pointer; transition: all .15s;
+}
+.note-card:hover { border-color: var(--accent2); box-shadow: var(--shadow); }
+.nc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.nc-title { font-size: .82rem; font-weight: 700; letter-spacing: -.02em; }
+.nc-sess-tag { font-size: .55rem; background: rgba(6,182,212,.12); color: #67e8f9; border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+.nc-prev { font-size: .68rem; color: var(--text2); margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.5; }
+.nc-date { font-size: .6rem; color: var(--text3); margin-top: 6px; }
+.nc-drive-files { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.nc-drive-badge { font-size: .58rem; background: rgba(66,133,244,.1); color: #93c5fd; border: 1px solid rgba(66,133,244,.2); border-radius: 4px; padding: 1px 6px; display: flex; align-items: center; gap: 3px; }
+/* note edit */
+.note-edit-area { display: none; }
+.note-edit-area.active { display: flex; flex-direction: column; gap: 9px; }
+.note-title-inp {
+  width: 100%; background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 1rem; font-weight: 700; letter-spacing: -.02em;
+  padding: 11px 13px; outline: none; transition: border-color .15s;
+}
+.note-title-inp:focus { border-color: var(--accent2); }
+.editor-area {
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 10px; min-height: 260px; padding: 13px;
+  outline: none; color: var(--text); font-size: .84rem; line-height: 1.8;
+  transition: border-color .15s; font-family: 'Inter', sans-serif;
+}
+.editor-area:focus { border-color: var(--accent2); }
+.editor-area h1 { font-size: 1.3rem; font-weight: 800; margin-bottom: 7px; letter-spacing: -.03em; }
+.editor-area h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 5px; letter-spacing: -.02em; }
+.editor-area h3 { font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
+.editor-area ul, .editor-area ol { padding-left: 22px; margin: 5px 0; }
+.editor-area blockquote { border-left: 3px solid var(--accent2); padding-left: 12px; color: var(--text2); font-style: italic; margin: 7px 0; }
+.editor-area img { max-width: 100%; border-radius: 8px; margin: 5px 0; }
+.file-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.file-chip { display: flex; align-items: center; gap: 5px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: .65rem; color: var(--text2); }
+.file-chip a { color: var(--cyan); text-decoration: none; }
+.note-actions { display: flex; gap: 8px; }
+.note-save-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-family: 'Inter', sans-serif; font-size: .78rem; font-weight: 700; cursor: pointer; transition: all .15s; letter-spacing: -.01em; }
+.note-save-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
+.note-del-btn { padding: 12px 15px; border-radius: 10px; border: 1px solid rgba(239,68,68,.3); background: rgba(239,68,68,.08); color: var(--red); cursor: pointer; font-size: 1rem; transition: all .15s; }
+
+/* ─── THEMES ─── */
+body.theme-dark{--bg:#09090b;--bg1:#111113;--bg2:#18181b;--bg3:#27272a;--border:#3f3f46;--border2:#52525b;--text:#fafafa;--text2:#a1a1aa;--text3:#71717a;}
+body.theme-light{--bg:#f8fafc;--bg1:#f1f5f9;--bg2:#ffffff;--bg3:#e2e8f0;--border:#cbd5e1;--border2:#94a3b8;--text:#0f172a;--text2:#475569;--text3:#94a3b8;--accent-glow:rgba(124,58,237,.12);}
+body.theme-dim{--bg:#141821;--bg1:#1a2030;--bg2:#1e2638;--bg3:#252f44;--border:#2d3a52;--border2:#3d4f6e;--text:#e2e8f5;--text2:#8899b8;--text3:#5a6f90;}
+body.theme-sepia{--bg:#1c1510;--bg1:#231a12;--bg2:#2a2016;--bg3:#33281c;--border:#4a3828;--border2:#5e4832;--text:#f5e6c8;--text2:#c8a870;--text3:#8a6845;}
+body.theme-midnight{--bg:#050510;--bg1:#08080f;--bg2:#0d0d1a;--bg3:#141428;--border:#1e1e3a;--border2:#2a2a50;--text:#c8c8ff;--text2:#7070cc;--text3:#4040aa;}
+body.accent-violet{--accent:#7c3aed;--accent2:#8b5cf6;--accent3:#a78bfa;--accent-glow:rgba(124,58,237,.25);}
+body.accent-blue{--accent:#2563eb;--accent2:#3b82f6;--accent3:#93c5fd;--accent-glow:rgba(37,99,235,.25);}
+body.accent-cyan{--accent:#0891b2;--accent2:#06b6d4;--accent3:#67e8f9;--accent-glow:rgba(8,145,178,.25);}
+body.accent-green{--accent:#16a34a;--accent2:#22c55e;--accent3:#86efac;--accent-glow:rgba(22,163,74,.25);}
+body.accent-rose{--accent:#e11d48;--accent2:#f43f5e;--accent3:#fda4af;--accent-glow:rgba(225,29,72,.25);}
+body.accent-orange{--accent:#ea580c;--accent2:#f97316;--accent3:#fdba74;--accent-glow:rgba(234,88,12,.25);}
+
+/* ─── SETTINGS ─── */
+.settings-sec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px;}
+.settings-sec-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:14px;}
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;}
+.theme-card{border:2px solid var(--border);border-radius:12px;padding:10px 6px;cursor:pointer;transition:all .2s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.theme-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.theme-card.active{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2),0 0 16px var(--accent-glow);}
+.theme-preview{width:50px;height:34px;border-radius:7px;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.tp-bar{height:9px;flex-shrink:0;}
+.tp-body{flex:1;display:flex;gap:2px;padding:2px;}
+.tp-card{flex:1;border-radius:2px;}
+.theme-name{font-size:.62rem;font-weight:600;color:var(--text2);}
+.accent-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.accent-dot{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.accent-dot:hover{transform:scale(1.15);}
+.accent-dot.active{border-color:white;box-shadow:0 0 0 2px var(--bg3);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;padding-bottom:0;}
+.sr-info{display:flex;flex-direction:column;gap:3px;}
+.sr-label{font-size:.84rem;font-weight:600;letter-spacing:-.01em;}
+.sr-desc{font-size:.68rem;color:var(--text3);}
+.toggle{width:44px;height:24px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--accent2);border-color:var(--accent2);}
+.toggle-k{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.toggle.on .toggle-k{transform:translateX(20px);}
+.app-ver{text-align:center;font-size:.62rem;color:var(--text3);margin-top:24px;line-height:1.8;}
+
+/* ─── DRIVE AUTH STATUS ─── */
+.drive-status-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px;
+}
+.drive-status-info { display: flex; align-items: center; gap: 8px; font-size: .75rem; }
+.drive-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.drive-dot.on { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.4); }
+.drive-dot.off { background: var(--text3); }
+
+/* ─── MODALI ─── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 300; align-items: flex-end; justify-content: center; backdrop-filter: blur(6px); }
+.overlay.open { display: flex; }
+@media(min-width:600px){.overlay{align-items:center;}.modal{border-radius:16px!important;max-height:90vh!important;}}
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 20px 20px 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom,0px));
+  width: 100%; max-width: 520px; max-height: 93dvh; overflow-y: auto;
+  animation: up .24s cubic-bezier(.32,.72,0,1);
+}
+@keyframes up { from{transform:translateY(100%);opacity:0;} to{transform:none;opacity:1;} }
+.drag-pill { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: -4px auto 16px; }
+.modal-title { font-size: .95rem; font-weight: 800; letter-spacing: -.03em; margin-bottom: 14px; }
+.modal-title span { color: var(--accent3); }
+.fg { margin-bottom: 11px; }
+.fg label { display: block; font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 5px; }
+.fg input, .fg textarea, .fg select { width: 100%; background: var(--bg3); border: 1.5px solid var(--border); border-radius: 9px; color: var(--text); font-family: 'Inter', sans-serif; font-size: .85rem; padding: 10px 12px; outline: none; transition: border-color .15s; resize: none; -webkit-appearance: none; }
+.fg input:focus, .fg textarea:focus, .fg select:focus { border-color: var(--accent2); }
+.fg select option { background: var(--bg2); }
+.btn-row { display: flex; gap: 7px; margin-top: 14px; }
+.btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-family: 'Inter', sans-serif; font-size: .78rem; font-weight: 700; cursor: pointer; transition: all .15s; letter-spacing: -.01em; }
+.btn-save { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+.btn-save:hover { box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
+.btn-del { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: var(--red); flex: 0 0 auto; padding: 12px 14px; font-size: 1rem; }
+.btn-x { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); flex: 0 0 auto; padding: 12px 14px; font-size: 1rem; }
+.type-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+.tbn { padding: 9px 2px; border-radius: 9px; border: 1.5px solid var(--border); background: transparent; color: var(--text3); font-family: 'Inter', sans-serif; font-size: .58rem; font-weight: 600; text-transform: uppercase; cursor: pointer; transition: all .15s; text-align: center; line-height: 1.6; }
+.tbn.av { border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.1); color: #fca5a5; }
+.tbn.as { border-color: rgba(6,182,212,.5); background: rgba(6,182,212,.08); color: #67e8f9; }
+.tbn.an { border-color: rgba(245,158,11,.5); background: rgba(245,158,11,.08); color: #fcd34d; }
+.tbn.al { border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.08); color: #86efac; }
+.mat-sel-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(110px,1fr)); gap: 7px; max-height: 260px; overflow-y: auto; }
+.msc { background: var(--bg3); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 8px; cursor: pointer; transition: all .15s; text-align: center; }
+.msc:hover { border-color: var(--accent2); background: var(--accent-glow); }
+.msc.sel { border-color: var(--accent2); background: var(--accent-glow); box-shadow: 0 0 0 1px rgba(124,58,237,.2); }
+.msc-ico { font-size: 1.3rem; margin-bottom: 4px; }
+.msc-nm { font-size: .66rem; font-weight: 600; }
+.mat-pick-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.mpl-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; background: var(--bg3); border: 1px solid var(--border); border-radius: 9px; cursor: pointer; transition: all .13s; }
+.mpl-item:hover:not(.already) { border-color: var(--accent2); background: var(--accent-glow); }
+.mpl-item.already { opacity: .35; cursor: default; }
+.mpl-name { font-size: .8rem; font-weight: 500; }
+.empty-state { text-align: center; padding: 32px 16px; color: var(--text3); }
+.es-ico { font-size: 2.4rem; margin-bottom: 8px; }
+.es-txt { font-size: .78rem; line-height: 1.6; }
+
+/* ─── FLOATING TIMER ─── */
+#floatingTimer {
+  position: fixed; bottom: calc(80px + env(safe-area-inset-bottom,0px)); right: 16px;
+  z-index: 200;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 10px 14px;
+  box-shadow: var(--shadow-lg);
+  display: none; flex-direction: column; gap: 4px;
+  min-width: 160px;
+  animation: popIn .25s cubic-bezier(.34,1.56,.64,1);
+  cursor: pointer;
+  transition: all .2s;
+}
+#floatingTimer:hover { border-color: var(--accent2); box-shadow: 0 8px 32px var(--accent-glow); }
+@keyframes popIn { from{transform:scale(.8) translateY(20px);opacity:0;} to{transform:none;opacity:1;} }
+#floatingTimer.visible { display: flex; }
+.ft-mat { font-size: .62rem; font-weight: 600; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+.ft-ico { font-size: .85rem; }
+.ft-time { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--accent3); letter-spacing: -.02em; line-height: 1; }
+.ft-time.run { animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.7;} }
+.ft-status { font-size: .58rem; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.ft-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent3); animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+</style>
+</head>
+<body>
+
+<!-- FLOATING TIMER -->
+<div id="floatingTimer" onclick="goToActiveSession()">
+  <div class="ft-mat"><span class="ft-ico" id="ftIco">📚</span><span id="ftMat">Studio</span></div>
+  <div class="ft-time" id="ftTime">00:00:00</div>
+  <div class="ft-status"><div class="ft-dot"></div><span id="ftStatus">In corso</span></div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="ob-brand">
+    <div class="ob-brand-icon">📅</div>
+    <div class="ob-brand-name">Studyflow</div>
+  </div>
+  <div class="ob-h">Che scuola frequenti?</div>
+  <div class="ob-sub">Scegli il tuo istituto e le materie vengono impostate automaticamente. Potrai sempre personalizzarle.</div>
+  <div class="school-cards" id="schoolCards"></div>
+  <button class="ob-btn" id="obBtn" disabled onclick="confirmSchool()">Inizia con Studyflow →</button>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-dot">📅</div>
+      <span class="brand-name">Studyflow</span>
+    </div>
+    <span class="school-chip" id="schoolChip" onclick="changeSchool()">—</span>
+  </div>
+</div>
+
+<!-- PAGE: ORARIO -->
+<div class="page active" id="page-orario">
+  <div class="week-nav">
+    <button class="wk-nav-btn" id="btnPrev" onclick="prevWeek()">‹</button>
+    <div class="wk-info"><div class="wk-num" id="wkNum">—</div><div class="wk-range" id="wkRange">—</div></div>
+    <button class="wk-nav-btn" id="btnNext" onclick="nextWeek()">›</button>
+    <button class="pill-btn primary" onclick="goToday()" style="padding:6px 12px;font-size:.7rem;">Oggi</button>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-label" id="progLabel"></div>
+  </div>
+  <div class="week-grid" id="weekGrid"></div>
+</div>
+
+<!-- PAGE: STUDIO -->
+<div class="page" id="page-studio">
+  <div class="week-nav">
+    <button class="wk-nav-btn" id="sBtnPrev" onclick="prevSW()">‹</button>
+    <div class="wk-info"><div class="wk-num" id="sWkNum">—</div><div class="wk-range" id="sWkRange">—</div></div>
+    <button class="wk-nav-btn" id="sBtnNext" onclick="nextSW()">›</button>
+    <button class="pill-btn primary" onclick="goSToday()" style="padding:6px 12px;font-size:.7rem;">Oggi</button>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-bar"><div class="prog-fill" id="sProgFill"></div></div>
+  </div>
+  <div class="studio-days" id="studioDays"></div>
+</div>
+
+<!-- PAGE: APPUNTI -->
+<div class="page" id="page-appunti">
+  <div class="mgw" id="mgw">
+    <!-- Drive status -->
+    <div class="drive-status-bar">
+      <div class="drive-status-info">
+        <div class="drive-dot" id="driveDot"></div>
+        <span id="driveStatusTxt">Google Drive non collegato</span>
+      </div>
+      <button class="drive-btn" id="driveAuthBtn" onclick="handleDriveAuth()">
+        🗂️ Connetti Drive
+      </button>
+    </div>
+    <div class="sec-hd">
+      <div><div class="sec-title">📓 Appunti</div></div>
+      <button class="pill-btn" onclick="openAddMatModal()">+ Materia</button>
+    </div>
+    <div class="mat-grid" id="materieGrid"></div>
+    <div style="margin-top:16px;">
+      <div class="sec-hd" style="margin-bottom:10px;">
+        <span style="font-size:.85rem;font-weight:700;letter-spacing:-.02em;">💬 Note Veloci</span>
+      </div>
+      <div class="qn-bar">
+        <input class="qn-inp" id="qnInp" placeholder="Scrivi una nota veloce..." onkeydown="if(event.key==='Enter')addQN()">
+        <button class="qn-add" onclick="addQN()">+</button>
+      </div>
+      <div id="qnList"></div>
+    </div>
+  </div>
+  <div class="note-editor-wrap" id="noteEd">
+    <div class="note-back" onclick="backToMat()">← <span id="noteBread">—</span></div>
+    <div class="note-hd">
+      <div class="note-mat-title" id="noteMatT">—</div>
+      <button class="pill-btn primary" onclick="newNote()">+ Nota</button>
+    </div>
+    <div id="noteListWrap"><div class="note-list" id="noteList"></div></div>
+    <div class="note-edit-area" id="noteEditA">
+      <div class="note-back" onclick="backToNoteList()">← Tutte le note</div>
+      <input class="note-title-inp" id="noteTitleInp" placeholder="Titolo nota...">
+      <!-- Drive attach in note -->
+      <div class="drive-section" style="margin-bottom:8px;">
+        <div class="drive-hd">
+          <span class="drive-label">🗂️ File da Google Drive</span>
+          <button class="drive-btn" id="notePickDriveBtn" onclick="pickDriveForNote()">+ Allega da Drive</button>
+        </div>
+        <div class="drive-files" id="noteDriveFiles"></div>
+      </div>
+      <div class="toolbar">
+        <button class="tb" onclick="fmtM('bold')"><b>B</b></button>
+        <button class="tb" onclick="fmtM('italic')"><i>I</i></button>
+        <button class="tb" onclick="fmtM('underline')"><u>U</u></button>
+        <button class="tb" onclick="fmtM('strikeThrough')"><s>S</s></button>
+        <span class="tb-sep"></span>
+        <button class="tb" onclick="fmtM('formatBlock','h1')">H1</button>
+        <button class="tb" onclick="fmtM('formatBlock','h2')">H2</button>
+        <button class="tb" onclick="fmtM('formatBlock','h3')">H3</button>
+        <span class="tb-sep"></span>
+        <button class="tb" onclick="fmtM('insertUnorderedList')">• Lista</button>
+        <button class="tb" onclick="fmtM('insertOrderedList')">1. Lista</button>
+        <button class="tb" onclick="fmtM('formatBlock','blockquote')">❝</button>
+        <span class="tb-sep"></span>
+        <span class="tb cp-w">A<input type="color" onchange="fmtM('foreColor',this.value)" value="#a78bfa"></span>
+        <span class="tb cp-w">🖍<input type="color" onchange="fmtM('hiliteColor',this.value)" value="#fbbf24"></span>
+        <span class="tb-sep"></span>
+        <button class="tb" onclick="insImgM()">🖼</button>
+        <button class="tb" onclick="attFileM()">📎</button>
+        <input type="file" id="imgInpM" accept="image/*" style="display:none" onchange="handleImgM(this)">
+        <input type="file" id="fileInpM" style="display:none" onchange="handleFileM(this)">
+      </div>
+      <div class="editor-area" id="editorA" contenteditable="true" spellcheck="true"></div>
+      <div class="file-chips" id="fileChipsM"></div>
+      <div class="note-actions">
+        <button class="note-save-btn" onclick="saveNote()">💾 Salva nota</button>
+        <button class="note-del-btn" id="noteDelBtn" onclick="deleteNote()" style="display:none">🗑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: IMPOSTAZIONI -->
+<div class="page" id="page-impostazioni">
+
+  <!-- TEMA SFONDO -->
+  <div class="settings-sec">
+    <div class="settings-sec-title">🌙 Tema sfondo</div>
+    <div class="theme-grid" id="themeGrid">
+      <div class="theme-card active" data-theme="dark" onclick="setTheme('dark')">
+        <div class="theme-preview"><div class="tp-bar" style="background:#27272a"></div><div class="tp-body"><div class="tp-card" style="background:#18181b"></div><div class="tp-card" style="background:#3f3f46"></div></div></div>
+        <span class="theme-name">Dark</span>
+      </div>
+      <div class="theme-card" data-theme="light" onclick="setTheme('light')">
+        <div class="theme-preview"><div class="tp-bar" style="background:#e2e8f0"></div><div class="tp-body"><div class="tp-card" style="background:#ffffff"></div><div class="tp-card" style="background:#f1f5f9"></div></div></div>
+        <span class="theme-name">Light</span>
+      </div>
+      <div class="theme-card" data-theme="dim" onclick="setTheme('dim')">
+        <div class="theme-preview"><div class="tp-bar" style="background:#252f44"></div><div class="tp-body"><div class="tp-card" style="background:#1e2638"></div><div class="tp-card" style="background:#2d3a52"></div></div></div>
+        <span class="theme-name">Dim</span>
+      </div>
+      <div class="theme-card" data-theme="sepia" onclick="setTheme('sepia')">
+        <div class="theme-preview"><div class="tp-bar" style="background:#4a3828"></div><div class="tp-body"><div class="tp-card" style="background:#2a2016"></div><div class="tp-card" style="background:#33281c"></div></div></div>
+        <span class="theme-name">Sepia</span>
+      </div>
+      <div class="theme-card" data-theme="midnight" onclick="setTheme('midnight')">
+        <div class="theme-preview"><div class="tp-bar" style="background:#141428"></div><div class="tp-body"><div class="tp-card" style="background:#0d0d1a"></div><div class="tp-card" style="background:#1e1e3a"></div></div></div>
+        <span class="theme-name">Midnight</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLORE ACCENT -->
+  <div class="settings-sec">
+    <div class="settings-sec-title">🎨 Colore principale</div>
+    <div class="accent-row" id="accentRow">
+      <div class="accent-dot active" data-accent="violet" onclick="setAccent('violet')" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" title="Viola"></div>
+      <div class="accent-dot" data-accent="blue" onclick="setAccent('blue')" style="background:linear-gradient(135deg,#2563eb,#93c5fd)" title="Blu"></div>
+      <div class="accent-dot" data-accent="cyan" onclick="setAccent('cyan')" style="background:linear-gradient(135deg,#0891b2,#67e8f9)" title="Cyan"></div>
+      <div class="accent-dot" data-accent="green" onclick="setAccent('green')" style="background:linear-gradient(135deg,#16a34a,#86efac)" title="Verde"></div>
+      <div class="accent-dot" data-accent="rose" onclick="setAccent('rose')" style="background:linear-gradient(135deg,#e11d48,#fda4af)" title="Rosa"></div>
+      <div class="accent-dot" data-accent="orange" onclick="setAccent('orange')" style="background:linear-gradient(135deg,#ea580c,#fdba74)" title="Arancio"></div>
+    </div>
+  </div>
+
+  <!-- PREFERENZE -->
+  <div class="settings-sec">
+    <div class="settings-sec-title">⚙️ Preferenze</div>
+    <div class="settings-row">
+      <div class="sr-info">
+        <span class="sr-label">Scuola frequentata</span>
+        <span class="sr-desc" id="curSchoolName">—</span>
+      </div>
+      <button class="pill-btn" onclick="changeSchool()" style="font-size:.7rem;padding:7px 13px;">Cambia</button>
+    </div>
+    <div class="settings-row">
+      <div class="sr-info">
+        <span class="sr-label">Animazioni ridotte</span>
+        <span class="sr-desc">Disabilita le animazioni di transizione</span>
+      </div>
+      <div class="toggle" id="toggleAnim" onclick="toggleAnim()"><div class="toggle-k"></div></div>
+    </div>
+    <div class="settings-row">
+      <div class="sr-info">
+        <span class="sr-label">Google Drive</span>
+        <span class="sr-desc" id="driveSettingStatus">Non collegato</span>
+      </div>
+      <button class="pill-btn" id="driveSettingBtn" onclick="handleDriveAuth();updateSettingsDrive()" style="font-size:.7rem;padding:7px 13px;">Connetti</button>
+    </div>
+  </div>
+
+  <!-- DATI -->
+  <div class="settings-sec">
+    <div class="settings-sec-title">🗄️ Dati</div>
+    <div class="settings-row">
+      <div class="sr-info">
+        <span class="sr-label">Esporta tutti i dati</span>
+        <span class="sr-desc">Scarica un backup JSON di tutti i tuoi dati</span>
+      </div>
+      <button class="pill-btn" onclick="exportData()" style="font-size:.7rem;padding:7px 13px;">Esporta</button>
+    </div>
+    <div class="settings-row">
+      <div class="sr-info">
+        <span class="sr-label">Cancella tutti i dati</span>
+        <span class="sr-desc">Rimuove orario, sessioni e appunti</span>
+      </div>
+      <button class="pill-btn" onclick="clearAllData()" style="font-size:.7rem;padding:7px 13px;border-color:rgba(239,68,68,.3);color:var(--red);">Cancella</button>
+    </div>
+  </div>
+
+  <div class="app-ver">
+    <strong>Studyflow</strong> v1.0<br>
+    Fatto con ❤️ per l'esame di stato<br>
+    I tuoi dati sono salvati solo sul tuo dispositivo
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav active" id="bnav-orario" onclick="switchPage('orario')"><span class="bnav-ico">📅</span><span class="bnav-lbl">Orario</span></button>
+  <button class="bnav" id="bnav-studio" onclick="switchPage('studio')"><span class="bnav-ico">📚</span><span class="bnav-lbl">Studio</span></button>
+  <button class="bnav" id="bnav-appunti" onclick="switchPage('appunti')"><span class="bnav-ico">📓</span><span class="bnav-lbl">Appunti</span></button>
+  <button class="bnav" id="bnav-impostazioni" onclick="switchPage('impostazioni')"><span class="bnav-ico">⚙️</span><span class="bnav-lbl">Impostaz.</span></button>
+</div>
+
+<!-- DAY PANEL -->
+<div class="day-panel" id="dayPanel">
+  <div class="dp-bar">
+    <button class="dp-back" onclick="closeDayPanel()">← Indietro</button>
+    <div class="dp-title" id="dpTitle">—</div>
+    <div class="dp-total" id="dpTotal">00:00:00</div>
+  </div>
+  <div class="dp-content">
+    <button class="new-sess" onclick="openNewSessModal()">
+      <span style="font-size:1.1rem;">+</span> Nuova Sessione di Studio
+    </button>
+    <div class="sess-list" id="sessList"></div>
+  </div>
+</div>
+
+<!-- MODAL ORARIO SLOT -->
+<div class="overlay" id="ovAg">
+  <div class="modal">
+    <div class="drag-pill"></div>
+    <div class="modal-title">✏️ <span id="agTitle">—</span></div>
+    <div class="fg"><label>Tipo</label>
+      <div class="type-grid">
+        <button class="tbn" data-t="verifica" onclick="selAgT('verifica')">🔴<br>Verifica</button>
+        <button class="tbn" data-t="studio" onclick="selAgT('studio')">🔵<br>Studio</button>
+        <button class="tbn" data-t="nota" onclick="selAgT('nota')">🟡<br>Nota</button>
+        <button class="tbn" data-t="libero" onclick="selAgT('libero')">🟢<br>Libero</button>
+      </div>
+    </div>
+    <div class="fg"><label>Materia</label><input id="agM" type="text" placeholder="es. Matematica, Italiano..." maxlength="50"></div>
+    <div class="fg"><label>Argomento / Note</label><textarea id="agD" rows="3" placeholder="es. Integrali pag. 120-140..."></textarea></div>
+    <!-- Drive in orario -->
+    <div class="drive-section" id="agDriveSection">
+      <div class="drive-hd">
+        <span class="drive-label">🗂️ Allega da Google Drive</span>
+        <button class="drive-btn" onclick="pickDriveForSlot()">+ Allega</button>
+      </div>
+      <div class="drive-files" id="agDriveFiles"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-save" onclick="saveAgSlot()">💾 Salva</button>
+      <button class="btn btn-del" id="agDelBtn" onclick="delAgSlot()" style="display:none">🗑</button>
+      <button class="btn btn-x" onclick="closeOv('ovAg')">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUOVA SESSIONE -->
+<div class="overlay" id="ovNewSess">
+  <div class="modal">
+    <div class="drag-pill"></div>
+    <div class="modal-title">📚 Scegli Materia</div>
+    <div class="fg"><label>Cerca</label><input id="sessSrch" type="text" placeholder="es. Matematica..." oninput="buildSessGrid()"></div>
+    <div class="mat-sel-grid" id="sessMatGrid"></div>
+    <div class="btn-row">
+      <button class="btn btn-save" onclick="createSession()">Inizia Sessione →</button>
+      <button class="btn btn-x" onclick="closeOv('ovNewSess')">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGGIUNGI MATERIA -->
+<div class="overlay" id="ovAddMat">
+  <div class="modal">
+    <div class="drag-pill"></div>
+    <div class="modal-title">📚 Aggiungi Materia</div>
+    <div class="fg"><label>Cerca o scrivi</label><input id="matSrch" type="text" placeholder="es. Scienze umane..." oninput="filterMatList()"></div>
+    <div class="mat-pick-list" id="matPickList"></div>
+    <div class="btn-row">
+      <button class="btn btn-save" onclick="addCustomMat()">+ Aggiungi materia personalizzata</button>
+      <button class="btn btn-x" onclick="closeOv('ovAddMat')">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// GOOGLE DRIVE / PICKER CONFIG
+// ══════════════════════════════════════════════════════════
+const GAPI_KEY   = 'AIzaSyCQCUSFu9-4wgLzRck-xU8RNA_-TTiCwgY';
+const CLIENT_ID  = '24950190598-odenlevd59ce7us8ju0m156vo40efc7t.apps.googleusercontent.com';
+const SCOPES     = 'https://www.googleapis.com/auth/drive.readonly';
+const PICKER_API = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+
+let driveAccessToken = null;
+let driveConnected = false;
+let pickerCallbackFn = null; // what to do after pick
+let slotDriveFiles = []; // files attached to current slot
+let noteDriveFiles = []; // files attached to current note edit
+
+function initDriveAPI() {
+  if (typeof gapi === 'undefined') return;
+  gapi.load('client:picker', () => {
+    gapi.client.init({ apiKey: GAPI_KEY, discoveryDocs: [PICKER_API] }).then(() => {
+      // try silent token restore
+      const saved = localStorage.getItem('drive_token');
+      if (saved) {
+        driveAccessToken = saved;
+        driveConnected = true;
+        updateDriveUI();
+      }
+    }).catch(() => {});
+  });
+}
+
+function handleDriveAuth() {
+  if (driveConnected) { disconnectDrive(); return; }
+  if (typeof google === 'undefined') { alert('Google API non caricata. Controlla la connessione.'); return; }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.access_token) {
+        driveAccessToken = resp.access_token;
+        driveConnected = true;
+        localStorage.setItem('drive_token', resp.access_token);
+        updateDriveUI();
+      }
+    }
+  });
+  client.requestAccessToken();
+}
+
+function disconnectDrive() {
+  if (!confirm('Disconnettere Google Drive?')) return;
+  driveAccessToken = null; driveConnected = false;
+  localStorage.removeItem('drive_token');
+  updateDriveUI();
+}
+
+function updateDriveUI() {
+  const dot = document.getElementById('driveDot');
+  const txt = document.getElementById('driveStatusTxt');
+  const btn = document.getElementById('driveAuthBtn');
+  if (!dot) return;
+  if (driveConnected) {
+    dot.className = 'drive-dot on';
+    txt.textContent = 'Google Drive connesso';
+    btn.className = 'drive-btn connected'; btn.textContent = '✓ Disconnetti Drive';
+  } else {
+    dot.className = 'drive-dot off';
+    txt.textContent = 'Google Drive non collegato';
+    btn.className = 'drive-btn'; btn.textContent = '🗂️ Connetti Drive';
+  }
+}
+
+function openPicker(callback) {
+  if (!driveConnected || !driveAccessToken) {
+    alert('Prima connetti Google Drive dalla sezione Appunti!'); return;
+  }
+  pickerCallbackFn = callback;
+  const view = new google.picker.View(google.picker.ViewId.DOCS);
+  const picker = new google.picker.PickerBuilder()
+    .addView(view)
+    .setOAuthToken(driveAccessToken)
+    .setDeveloperKey(GAPI_KEY)
+    .setCallback(pickerCallback)
+    .build();
+  picker.setVisible(true);
+}
+
+function pickerCallback(data) {
+  if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+    const file = data[google.picker.Response.DOCUMENTS][0];
+    const fileInfo = {
+      id: file[google.picker.Document.ID],
+      name: file[google.picker.Document.NAME],
+      url: file[google.picker.Document.URL],
+      iconUrl: file[google.picker.Document.ICON_URL],
+      mimeType: file[google.picker.Document.MIME_TYPE]
+    };
+    if (pickerCallbackFn) pickerCallbackFn(fileInfo);
+  }
+}
+
+function pickDriveForSlot() {
+  openPicker((file) => {
+    slotDriveFiles.push(file);
+    renderSlotDriveFiles();
+  });
+}
+
+function pickDriveForNote() {
+  openPicker((file) => {
+    noteDriveFiles.push(file);
+    renderNoteDriveFiles();
+  });
+}
+
+function pickDriveForSession(sid) {
+  openPicker((file) => {
+    const sess = getSess(sid);
+    if (!sess) return;
+    if (!sess.driveFiles) sess.driveFiles = [];
+    sess.driveFiles.push(file);
+    sv(SK.ss, sessions);
+    renderSessDriveFiles(sid);
+  });
+}
+
+function renderSlotDriveFiles() {
+  const el = document.getElementById('agDriveFiles'); if (!el) return;
+  el.innerHTML = slotDriveFiles.map((f, i) =>
+    `<a class="drive-file" href="${esc(f.url)}" target="_blank">
+      <span class="drive-file-ico">🗂️</span>
+      <span class="drive-file-name">${esc(f.name)}</span>
+      <button class="drive-file-del" onclick="event.preventDefault();slotDriveFiles.splice(${i},1);renderSlotDriveFiles()">✕</button>
+    </a>`).join('');
+}
+
+function renderNoteDriveFiles() {
+  const el = document.getElementById('noteDriveFiles'); if (!el) return;
+  el.innerHTML = noteDriveFiles.map((f, i) =>
+    `<a class="drive-file" href="${esc(f.url)}" target="_blank">
+      <span class="drive-file-ico">🗂️</span>
+      <span class="drive-file-name">${esc(f.name)}</span>
+      <button class="drive-file-del" onclick="event.preventDefault();noteDriveFiles.splice(${i},1);renderNoteDriveFiles()">✕</button>
+    </a>`).join('');
+}
+
+function renderSessDriveFiles(sid) {
+  const el = document.getElementById(`sdf-${sid}`); if (!el) return;
+  const sess = getSess(sid); if (!sess) return;
+  const files = sess.driveFiles || [];
+  el.innerHTML = files.map((f, i) =>
+    `<a class="drive-file" href="${esc(f.url)}" target="_blank">
+      <span class="drive-file-ico">🗂️</span>
+      <span class="drive-file-name">${esc(f.name)}</span>
+      <button class="drive-file-del" onclick="event.preventDefault();removeSessFile('${sid}',${i})">✕</button>
+    </a>`).join('');
+}
+
+function removeSessFile(sid, idx) {
+  const sess = getSess(sid); if (!sess || !sess.driveFiles) return;
+  sess.driveFiles.splice(idx, 1); sv(SK.ss, sessions); renderSessDriveFiles(sid);
+}
+
+// ══════════════════════════════════════════════════════════
+// SCUOLE
+// ══════════════════════════════════════════════════════════
+const SCUOLE = [
+  { id:'classico', emoji:'🏛️', nome:'Liceo Classico', materie:['Lingua e letteratura italiana','Storia','Inglese','Matematica','Scienze','Educazione fisica','Educazione civica','Religione cattolica','Latino','Greco','Filosofia'] },
+  { id:'scientifico', emoji:'🔬', nome:'Liceo Scientifico', materie:['Lingua e letteratura italiana','Storia','Inglese','Matematica','Fisica','Scienze','Chimica','Biologia','Scienze della terra','Disegno tecnico','Educazione fisica','Educazione civica','Religione cattolica'] },
+  { id:'linguistico', emoji:'🌍', nome:'Liceo Linguistico', materie:['Lingua e letteratura italiana','Storia','Inglese','Seconda lingua straniera','Terza lingua straniera','Matematica','Scienze','Educazione fisica','Educazione civica','Religione cattolica'] },
+  { id:'scienze_umane', emoji:'🧠', nome:'Liceo Scienze Umane', materie:['Lingua e letteratura italiana','Storia','Inglese','Matematica','Scienze','Filosofia','Psicologia','Sociologia','Pedagogia','Scienze umane','Educazione fisica','Educazione civica','Religione cattolica'] },
+  { id:'artistico', emoji:'🎨', nome:'Liceo Artistico', materie:['Lingua e letteratura italiana','Storia','Inglese','Matematica','Scienze','Storia dell\'arte','Discipline artistiche','Educazione fisica','Educazione civica','Religione cattolica'] },
+  { id:'tecnico', emoji:'💻', nome:'Istituto Tecnico', materie:['Lingua e letteratura italiana','Storia','Inglese','Matematica','Informatica','Diritto','Economia aziendale','Economia politica','Geografia economica','Scienze','Educazione fisica','Educazione civica','Religione cattolica'] },
+  { id:'alberghiero', emoji:'🍳', nome:'Istituto Alberghiero', materie:['Lingua e letteratura italiana','Storia','Inglese','Matematica','Scienze','Scienze degli alimenti','Enogastronomia','Sala e vendita','Accoglienza turistica','Diritto','Tecniche di comunicazione','Educazione fisica','Educazione civica','Religione cattolica'] }
+];
+
+const ALL_MATERIE = ['Lingua e letteratura italiana','Storia','Inglese','Matematica','Scienze','Educazione fisica','Educazione civica','Religione cattolica','Latino','Greco','Filosofia','Fisica','Chimica','Biologia','Scienze della terra','Seconda lingua straniera','Terza lingua straniera','Storia dell\'arte','Disegno tecnico','Informatica','Diritto','Economia aziendale','Economia politica','Geografia','Geografia economica','Psicologia','Sociologia','Pedagogia','Scienze umane','Scienze degli alimenti','Enogastronomia','Accoglienza turistica','Sala e vendita','Tecniche di comunicazione','Discipline artistiche','Matematica applicata','Statistica','Elettronica','Meccanica','Tecnologia','Disegno artistico','Musica','Scienze motorie','Anatomia','Igiene','Biotecnologie','Letteratura latina','Letteratura greca','Management','Marketing'];
+
+const MAT_ICONS = {'Lingua e letteratura italiana':'📜','Storia':'📚','Inglese':'🇬🇧','Matematica':'📐','Scienze':'🔬','Educazione fisica':'⚽','Educazione civica':'🏛️','Religione cattolica':'✝️','Latino':'🏺','Greco':'🏛️','Filosofia':'🦉','Fisica':'⚛️','Chimica':'⚗️','Biologia':'🧬','Scienze della terra':'🌋','Seconda lingua straniera':'🌐','Terza lingua straniera':'🌐','Storia dell\'arte':'🖼️','Disegno tecnico':'📐','Informatica':'💻','Diritto':'⚖️','Economia aziendale':'💼','Economia politica':'💰','Geografia':'🌍','Geografia economica':'📊','Psicologia':'🧠','Sociologia':'🤝','Pedagogia':'👶','Scienze umane':'👥','Scienze degli alimenti':'🍽️','Enogastronomia':'🍷','Accoglienza turistica':'🏨','Sala e vendita':'🛎️','Tecniche di comunicazione':'📢','Discipline artistiche':'🎨','Musica':'🎵','Scienze motorie':'🏃','Matematica applicata':'🔢','Statistica':'📊','Elettronica':'⚡','Meccanica':'🔧','Tecnologia':'⚙️','Disegno artistico':'✏️','Marketing':'📈','Management':'📋','Biotecnologie':'🔬','Letteratura latina':'📜'};
+const MAT_COLORS = {'Lingua e letteratura italiana':'#06b6d4','Storia':'#a78bfa','Inglese':'#ef4444','Matematica':'#f59e0b','Scienze':'#10b981','Educazione fisica':'#ef4444','Educazione civica':'#7c3aed','Religione cattolica':'#a78bfa','Latino':'#d97706','Greco':'#92400e','Filosofia':'#f59e0b','Fisica':'#3b82f6','Chimica':'#8b5cf6','Biologia':'#22c55e','Scienze della terra':'#16a34a','Seconda lingua straniera':'#3b82f6','Terza lingua straniera':'#2563eb','Storia dell\'arte':'#f97316','Disegno tecnico':'#06b6d4','Informatica':'#06b6d4','Diritto':'#7c3aed','Economia aziendale':'#0ea5e9','Economia politica':'#0284c7','Geografia':'#22c55e','Geografia economica':'#16a34a','Psicologia':'#06b6d4','Sociologia':'#7c3aed','Pedagogia':'#8b5cf6','Scienze umane':'#6366f1','Scienze degli alimenti':'#f97316','Enogastronomia':'#dc2626','Accoglienza turistica':'#0ea5e9','Sala e vendita':'#f59e0b','Tecniche di comunicazione':'#ec4899','Discipline artistiche':'#f97316','Musica':'#ec4899','Scienze motorie':'#ef4444','Matematica applicata':'#f59e0b'};
+function mIco(m){return MAT_ICONS[m]||'📚';}
+function mCol(m){return MAT_COLORS[m]||'var(--accent)';}
+
+// ══════════════════════════════════════════════════════════
+// CONFIG / DATES
+// ══════════════════════════════════════════════════════════
+const GG=['Lun','Mar','Mer','Gio','Ven','Sab'];
+const GG_L=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MESI=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const MESI_L=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const ORE_X_GI=[5,6,5,5,6,5];
+const ORE_LBL=['1ª ora','2ª ora','3ª ora','4ª ora','5ª ora','6ª ora'];
+const TYPE_LBL={verifica:'⚠ Verifica',studio:'📖 Studio',nota:'📌 Nota',libero:'✓ Libero'};
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+let END=new Date(TODAY.getFullYear(),5,14);END.setHours(0,0,0,0);
+if(END<TODAY){END=new Date(TODAY.getFullYear()+1,5,14);END.setHours(0,0,0,0);}
+function getMon(d){const day=d.getDay(),diff=(day===0)?-6:1-day,m=new Date(d);m.setDate(d.getDate()+diff);m.setHours(0,0,0,0);return m;}
+const WEEKS=[];let _c=getMon(TODAY);while(_c<=END){WEEKS.push(new Date(_c));_c=new Date(_c);_c.setDate(_c.getDate()+7);}
+if(!WEEKS.length)WEEKS.push(getMon(TODAY));
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let agenda={},sessions={},appunti={},quickNotes=[],myMat=[];
+let weekIdx=0,sWeekIdx=0,curPage='orario';
+let curAgKey=null,curAgGi=null,curAgSi=null,curAgType=null;
+let curDayKey=null,curNoteMateria=null,curNoteId=null,noteFilesM=[];
+let selSessMat=null;
+const timerStates={};
+// floating timer global state
+let ftSid=null,ftDayKey=null;
+const SK={ag:'ag_v1',ss:'sess_v4',ap:'ap_v3',qn:'qn_v1',mat:'myMat_v3',sch:'school_v1'};
+
+function loadAll(){
+  function g(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch{return d;}}
+  agenda=g(SK.ag,{});sessions=g(SK.ss,{});appunti=g(SK.ap,{});
+  quickNotes=g(SK.qn,[]);myMat=g(SK.mat,[]);
+}
+function sv(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtD(d){return `${d.getDate()} ${MESI[d.getMonth()]}`;}
+function fmtDL(d){const gi=d.getDay();return `${GG_L[gi===0?6:gi-1]} ${d.getDate()} ${MESI_L[d.getMonth()]}`;}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function isPast(d){return d<TODAY;}
+function agK(date,si){return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${si}`;}
+function dK(date){return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;}
+function fmtT(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;}
+function fmtMM(s){const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;}
+
+// ══════════════════════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════════════════════
+let selSch=null;
+function initOnboarding(){
+  const saved=localStorage.getItem(SK.sch);
+  if(saved){
+    document.getElementById('onboarding').classList.add('hidden');
+    const s=SCUOLE.find(x=>x.id===saved);
+    if(s)document.getElementById('schoolChip').textContent=`${s.emoji} ${s.nome}`;
+    return;
+  }
+  buildSchoolCards();
+}
+function buildSchoolCards(){
+  const c=document.getElementById('schoolCards');c.innerHTML='';
+  SCUOLE.forEach(s=>{
+    const card=document.createElement('div');card.className='school-card';
+    card.innerHTML=`<div class="sc-row"><span class="sc-emoji">${s.emoji}</span><span class="sc-name">${s.nome}</span></div><div class="sc-mat">${s.materie.join(' · ')}</div>`;
+    card.onclick=()=>{selSch=s.id;document.querySelectorAll('.school-card').forEach(c=>c.classList.remove('sel'));card.classList.add('sel');document.getElementById('obBtn').disabled=false;};
+    c.appendChild(card);
+  });
+}
+function confirmSchool(){
+  if(!selSch)return;
+  const s=SCUOLE.find(x=>x.id===selSch);if(!s)return;
+  localStorage.setItem(SK.sch,selSch);
+  myMat=[...s.materie];sv(SK.mat,myMat);
+  document.getElementById('schoolChip').textContent=`${s.emoji} ${s.nome}`;
+  document.getElementById('onboarding').classList.add('hidden');
+  renderMaterie();
+}
+function changeSchool(){
+  if(!confirm('Cambiare scuola resetta le materie. Continuare?'))return;
+  localStorage.removeItem(SK.sch);selSch=null;
+  buildSchoolCards();document.getElementById('obBtn').disabled=true;
+  document.getElementById('onboarding').classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE SWITCHING
+// ══════════════════════════════════════════════════════════
+function switchPage(p){
+  curPage=p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  document.querySelectorAll('.bnav').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`bnav-${p}`).classList.add('active');
+  if(p==='orario')renderAgenda();
+  else if(p==='studio')renderStudioDays();
+  else if(p==='appunti'){renderMaterie();updateDriveUI();}
+}
+
+// ══════════════════════════════════════════════════════════
+// ORARIO
+// ══════════════════════════════════════════════════════════
+function renderAgenda(){
+  const mon=WEEKS[weekIdx],sat=new Date(mon);sat.setDate(mon.getDate()+5);
+  document.getElementById('wkNum').textContent=`Settimana ${weekIdx+1} di ${WEEKS.length}`;
+  document.getElementById('wkRange').textContent=`${fmtD(mon)} — ${fmtD(sat)}`;
+  document.getElementById('btnPrev').disabled=weekIdx===0;
+  document.getElementById('btnNext').disabled=weekIdx===WEEKS.length-1;
+  const pct=WEEKS.length<=1?100:Math.round(weekIdx/(WEEKS.length-1)*100);
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progLabel').textContent=`${pct}% dell'anno scolastico`;
+  const grid=document.getElementById('weekGrid');grid.innerHTML='';
+  for(let gi=0;gi<6;gi++){
+    const date=new Date(mon);date.setDate(mon.getDate()+gi);
+    const oggi=sameDay(date,TODAY),past=isPast(date);
+    const col=document.createElement('div');
+    col.className='day-col'+(oggi?' is-oggi':'')+(past?' is-past':'');
+    col.innerHTML=`<div class="day-hd${oggi?' oggi-h':''}"><div class="day-gg">${GG[gi]}${oggi?'<span class="today-dot"></span>':''}</div><div class="day-dt">${fmtD(date)}</div></div><div class="slots" id="asl-${gi}"></div>`;
+    grid.appendChild(col);
+    const sEl=col.querySelector(`#asl-${gi}`);
+    for(let si=0;si<ORE_X_GI[gi];si++){const key=agK(date,si);const el=document.createElement('div');el.onclick=()=>openAgModal(key,gi,date,si);renderSlotEl(el,key,si);sEl.appendChild(el);}
+  }
+}
+function renderSlotEl(el,key,si){
+  const d=agenda[key];el.className='slot'+(d?` t-${d.type}`:'');
+  if(!d){el.innerHTML=`<div class="slot-top"><span class="slot-ora">${ORE_LBL[si]}</span></div><div class="slot-empty-w"><span class="slot-empty-h">+ aggiungi</span></div>`;}
+  else{
+    const driveIco=d.driveFiles&&d.driveFiles.length?`<span style="font-size:.55rem;color:#93c5fd;margin-left:4px;">🗂️${d.driveFiles.length}</span>`:'';
+    el.innerHTML=`<div class="slot-top"><span class="slot-ora">${ORE_LBL[si]}</span><span class="slot-tag">${TYPE_LBL[d.type]||''}</span></div><div class="slot-body"><div class="slot-mat">${esc(d.materia||'—')}${driveIco}</div>${d.dettagli?`<div class="slot-arg">${esc(d.dettagli)}</div>`:''}</div>`;
+  }
+}
+function refreshSlot(key,gi,si){const sEl=document.getElementById(`asl-${gi}`);if(!sEl)return;const el=sEl.children[si];if(el)renderSlotEl(el,key,si);}
+function prevWeek(){if(weekIdx>0){weekIdx--;renderAgenda();}}
+function nextWeek(){if(weekIdx<WEEKS.length-1){weekIdx++;renderAgenda();}}
+function goToday(){for(let i=0;i<WEEKS.length;i++){const s=new Date(WEEKS[i]);s.setDate(WEEKS[i].getDate()+5);if(TODAY>=WEEKS[i]&&TODAY<=s){weekIdx=i;break;}}renderAgenda();}
+function openAgModal(key,gi,date,si){
+  curAgKey=key;curAgGi=gi;curAgSi=si;curAgType=null;slotDriveFiles=[];
+  document.getElementById('agTitle').textContent=`${GG_L[gi]} ${fmtD(date)} · ${ORE_LBL[si]}`;
+  document.getElementById('agM').value='';document.getElementById('agD').value='';
+  document.querySelectorAll('.tbn').forEach(b=>b.className='tbn');
+  document.getElementById('agDriveFiles').innerHTML='';
+  const ex=agenda[key];
+  if(ex){selAgT(ex.type);document.getElementById('agM').value=ex.materia||'';document.getElementById('agD').value=ex.dettagli||'';document.getElementById('agDelBtn').style.display='block';slotDriveFiles=ex.driveFiles||[];}
+  else document.getElementById('agDelBtn').style.display='none';
+  renderSlotDriveFiles();
+  openOv('ovAg');setTimeout(()=>document.getElementById('agM').focus(),200);
+}
+function selAgT(t){curAgType=t;const map={verifica:'av',studio:'as',nota:'an',libero:'al'};document.querySelectorAll('.tbn').forEach(b=>b.className='tbn'+(b.dataset.t===t?` ${map[t]}`:'')); }
+function saveAgSlot(){
+  if(!curAgKey)return;if(!curAgType){document.querySelector('.type-grid').style.outline='2px solid var(--red)';setTimeout(()=>document.querySelector('.type-grid').style.outline='',700);return;}
+  agenda[curAgKey]={type:curAgType,materia:document.getElementById('agM').value.trim(),dettagli:document.getElementById('agD').value.trim(),driveFiles:slotDriveFiles};
+  sv(SK.ag,agenda);refreshSlot(curAgKey,curAgGi,curAgSi);closeOv('ovAg');
+}
+function delAgSlot(){if(!curAgKey)return;delete agenda[curAgKey];sv(SK.ag,agenda);refreshSlot(curAgKey,curAgGi,curAgSi);closeOv('ovAg');}
+
+// ══════════════════════════════════════════════════════════
+// STUDIO — GIORNI
+// ══════════════════════════════════════════════════════════
+function renderStudioDays(){
+  const mon=WEEKS[sWeekIdx],sat=new Date(mon);sat.setDate(mon.getDate()+5);
+  document.getElementById('sWkNum').textContent=`Settimana ${sWeekIdx+1} di ${WEEKS.length}`;
+  document.getElementById('sWkRange').textContent=`${fmtD(mon)} — ${fmtD(sat)}`;
+  document.getElementById('sBtnPrev').disabled=sWeekIdx===0;
+  document.getElementById('sBtnNext').disabled=sWeekIdx===WEEKS.length-1;
+  document.getElementById('sProgFill').style.width=(WEEKS.length<=1?100:Math.round(sWeekIdx/(WEEKS.length-1)*100))+'%';
+  const container=document.getElementById('studioDays');container.innerHTML='';
+  // Compute week total
+  let weekTotal=0;
+  for(let gi=0;gi<6;gi++){const date=new Date(mon);date.setDate(mon.getDate()+gi);(sessions[dK(date)]||[]).forEach(s=>weekTotal+=(s.totalSecs||0));}
+  for(let gi=0;gi<6;gi++){
+    const date=new Date(mon);date.setDate(mon.getDate()+gi);
+    const dk=dK(date);const daySess=sessions[dk]||[];
+    const oggi=sameDay(date,TODAY),past=isPast(date);
+    const totalSecs=daySess.reduce((s,se)=>s+(se.totalSecs||0),0);
+    const mats=[...new Set(daySess.map(s=>s.materia))];
+    const card=document.createElement('div');
+    card.className='sday'+(daySess.length?' has-data':'')+(oggi?' is-oggi-s':'')+(past?' is-past-s':'');
+    const barPct=weekTotal>0?Math.round(totalSecs/weekTotal*100):0;
+    card.innerHTML=`
+      <div class="sday-row${oggi?' oggi-s-r':''}">
+        <div class="sday-date"><div class="sday-day-num">${date.getDate()}</div><div class="sday-month">${MESI[date.getMonth()]}</div></div>
+        <div class="sday-info">
+          <div class="sday-name">${GG_L[gi]}${oggi?'&nbsp;<span style="font-size:.5rem;background:var(--accent2);color:#fff;border-radius:4px;padding:1px 5px;font-weight:700;font-family:Inter,sans-serif;">OGGI</span>':''}</div>
+          <div class="sday-chips">
+            ${daySess.length?`<span class="chip chip-cyan">${daySess.length} sessioni</span>`:``}
+            ${totalSecs?`<span class="chip chip-purple">⏱ ${fmtT(totalSecs)}</span>`:`<span class="chip chip-empty">Nessuna sessione</span>`}
+            ${mats.slice(0,3).map(m=>`<span style="font-size:.75rem;">${mIco(m)}</span>`).join('')}
+          </div>
+        </div>
+        <button class="open-day-btn" onclick="openDayPanel('${dk}',${gi},${date.getTime()})">Apri →</button>
+      </div>
+      ${totalSecs?`<div class="sday-timebar"><div class="tb-label"><span>${fmtT(totalSecs)} studiati</span><span>${barPct}% della settimana</span></div><div class="tb-track"><div class="tb-fill" style="width:${barPct}%"></div></div></div>`:''}`;
+    container.appendChild(card);
+  }
+}
+function prevSW(){if(sWeekIdx>0){sWeekIdx--;renderStudioDays();}}
+function nextSW(){if(sWeekIdx<WEEKS.length-1){sWeekIdx++;renderStudioDays();}}
+function goSToday(){for(let i=0;i<WEEKS.length;i++){const s=new Date(WEEKS[i]);s.setDate(WEEKS[i].getDate()+5);if(TODAY>=WEEKS[i]&&TODAY<=s){sWeekIdx=i;break;}}renderStudioDays();}
+
+// ══════════════════════════════════════════════════════════
+// DAY PANEL
+// ══════════════════════════════════════════════════════════
+function openDayPanel(dk,gi,dateTs){
+  curDayKey=dk;
+  document.getElementById('dpTitle').textContent=fmtDL(new Date(dateTs));
+  document.getElementById('dayPanel').classList.add('open');
+  renderSessList();updateDayTotal();
+}
+function closeDayPanel(){
+  Object.keys(timerStates).forEach(sid=>{const ts=timerStates[sid];if(ts?.interval){clearInterval(ts.interval);ts.interval=null;ts.running=false;}});
+  document.getElementById('dayPanel').classList.remove('open');
+  renderStudioDays();
+}
+function updateDayTotal(){
+  const total=(sessions[curDayKey]||[]).reduce((s,se)=>s+(se.totalSecs||0),0);
+  const el=document.getElementById('dpTotal');if(el)el.textContent=fmtT(total);
+}
+
+// ══════════════════════════════════════════════════════════
+// SESSIONI
+// ══════════════════════════════════════════════════════════
+function openNewSessModal(){
+  selSessMat=null;document.getElementById('sessSrch').value='';buildSessGrid();openOv('ovNewSess');
+}
+function buildSessGrid(){
+  const q=document.getElementById('sessSrch').value.toLowerCase();
+  const grid=document.getElementById('sessMatGrid');grid.innerHTML='';
+  myMat.filter(m=>!q||m.toLowerCase().includes(q)).forEach(m=>{
+    const card=document.createElement('div');card.className='msc'+(selSessMat===m?' sel':'');
+    card.innerHTML=`<div class="msc-ico">${mIco(m)}</div><div class="msc-nm">${esc(m)}</div>`;
+    card.onclick=()=>{selSessMat=m;buildSessGrid();};
+    grid.appendChild(card);
+  });
+}
+function createSession(){
+  if(!selSessMat){alert('Seleziona una materia!');return;}
+  const sess={id:uid(),materia:selSessMat,createdAt:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),totalSecs:0,timerLogs:[],noteTitle:'',notes:'',driveFiles:[],done:false};
+  if(!sessions[curDayKey])sessions[curDayKey]=[];
+  sessions[curDayKey].push(sess);
+  sv(SK.ss,sessions);closeOv('ovNewSess');renderSessList();updateDayTotal();
+}
+function getSess(sid){return(sessions[curDayKey]||[]).find(s=>s.id===sid)||null;}
+
+function renderSessList(){
+  const list=sessions[curDayKey]||[];
+  const container=document.getElementById('sessList');container.innerHTML='';
+  if(!list.length){container.innerHTML=`<div class="empty-state"><div class="es-ico">📚</div><div class="es-txt">Nessuna sessione.<br>Premi "+ Nuova Sessione" per iniziare!</div></div>`;return;}
+  list.forEach(sess=>{
+    if(!timerStates[sess.id])timerStates[sess.id]={interval:null,secs:0,running:false,mode:'crono',cdTotal:1500,cdLeft:1500,cdStarted:false};
+    const card=document.createElement('div');
+    card.id=`sc-${sess.id}`;
+    card.className=`sess-card ${sess.done?'s-done':'s-active'}`;
+    card.innerHTML=buildSessHTML(sess);
+    container.appendChild(card);
+    updateTimerDisplay(sess.id);
+  });
+}
+
+function buildSessHTML(sess){
+  const color=mCol(sess.materia);
+  const totalFormatted=sess.totalSecs?fmtT(sess.totalSecs):'';
+  return `
+  <div class="sess-hdr" style="border-left:3px solid ${color}">
+    <div class="sess-hdr-left">
+      <span class="sess-mat-ico">${mIco(sess.materia)}</span>
+      <div class="sess-mat-info">
+        <div class="sess-mat-name">${esc(sess.materia)}</div>
+        <div class="sess-mat-time">Iniziata alle ${esc(sess.createdAt)}</div>
+      </div>
+    </div>
+    ${totalFormatted?`<span class="sess-total-badge">⏱ ${totalFormatted}</span>`:''}
+    <span class="sess-status ${sess.done?'dn':'run'}">${sess.done?'✓ Completata':'● Attiva'}</span>
+    <button class="sess-del" onclick="deleteSession('${sess.id}')">✕</button>
+  </div>
+  <div class="sess-body">
+    <div class="timer-tabs">
+      <button class="tt active" id="tt-crono-${sess.id}" onclick="switchSTab('${sess.id}','crono')">⏱ Cronometro</button>
+      <button class="tt" id="tt-cd-${sess.id}" onclick="switchSTab('${sess.id}','cd')">⏳ Countdown</button>
+    </div>
+    <div class="t-disp" id="td-${sess.id}">00:00:00</div>
+    <div class="cd-row" id="cdr-${sess.id}" style="display:none">
+      <input class="cd-f" id="cdh-${sess.id}" type="number" min="0" max="9" value="0">
+      <span class="cd-sep">:</span>
+      <input class="cd-f" id="cdm-${sess.id}" type="number" min="0" max="59" value="25">
+      <span class="cd-sep">:</span>
+      <input class="cd-f" id="cds-${sess.id}" type="number" min="0" max="59" value="0">
+    </div>
+    <div class="t-btns" id="tbr-${sess.id}"></div>
+    <div class="sess-logs" id="slog-${sess.id}">${(sess.timerLogs||[]).map(l=>`<span class="slog">⏱ ${l.time} · ${fmtT(l.secs)}</span>`).join('')}</div>
+    <!-- DRIVE FILES -->
+    <div class="drive-section">
+      <div class="drive-hd">
+        <span class="drive-label">🗂️ File da Google Drive</span>
+        <button class="drive-btn" onclick="pickDriveForSession('${sess.id}')">+ Allega</button>
+      </div>
+      <div class="drive-files" id="sdf-${sess.id}"></div>
+    </div>
+    <!-- NOTE -->
+    <div class="sess-notes">
+      <div class="sn-hd">
+        <span class="sn-label">📝 Appunti sessione</span>
+        <div class="sn-actions">
+          <span class="sn-ok" id="snok-${sess.id}">✓ Salvato!</span>
+          <button class="sn-save" onclick="saveSessNote('${sess.id}')">💾 Salva</button>
+        </div>
+      </div>
+      <input class="sn-title-inp" id="snt-${sess.id}" placeholder="Titolo appunto..." value="${esc(sess.noteTitle||'')}">
+      <div class="toolbar">
+        <button class="tb" onclick="fmtS('bold','${sess.id}')"><b>B</b></button>
+        <button class="tb" onclick="fmtS('italic','${sess.id}')"><i>I</i></button>
+        <button class="tb" onclick="fmtS('underline','${sess.id}')"><u>U</u></button>
+        <button class="tb" onclick="fmtS('strikeThrough','${sess.id}')"><s>S</s></button>
+        <span class="tb-sep"></span>
+        <button class="tb" onclick="fmtS('formatBlock','h1','${sess.id}')">H1</button>
+        <button class="tb" onclick="fmtS('formatBlock','h2','${sess.id}')">H2</button>
+        <button class="tb" onclick="fmtS('formatBlock','h3','${sess.id}')">H3</button>
+        <span class="tb-sep"></span>
+        <button class="tb" onclick="fmtS('insertUnorderedList',null,'${sess.id}')">• Lista</button>
+        <button class="tb" onclick="fmtS('insertOrderedList',null,'${sess.id}')">1. Lista</button>
+        <button class="tb" onclick="fmtS('formatBlock','blockquote','${sess.id}')">❝</button>
+        <span class="tb-sep"></span>
+        <span class="tb cp-w">A<input type="color" onchange="fmtS('foreColor',this.value,'${sess.id}')" value="#a78bfa"></span>
+        <span class="tb cp-w">🖍<input type="color" onchange="fmtS('hiliteColor',this.value,'${sess.id}')" value="#fbbf24"></span>
+        <span class="tb-sep"></span>
+        <button class="tb" onclick="insSessImg('${sess.id}')">🖼</button>
+        <input type="file" id="simg-${sess.id}" accept="image/*" style="display:none" onchange="handleSessImg(this,'${sess.id}')">
+      </div>
+      <div class="sess-ed" id="se-${sess.id}" contenteditable="true" spellcheck="true">${sess.notes||''}</div>
+      ${sess.notes?`<div class="note-saved-hint">📓 Salvato anche in Appunti → ${esc(sess.materia)}</div>`:''}
+    </div>
+    <button class="sess-done-btn" onclick="toggleSessDone('${sess.id}')"
+      style="background:${sess.done?'rgba(34,197,94,.1)':'rgba(124,58,237,.1)'};border:1px solid ${sess.done?'rgba(34,197,94,.3)':'rgba(124,58,237,.3)'};color:${sess.done?'#86efac':'var(--accent3)'};">
+      ${sess.done?'↩ Riapri sessione':'✓ Segna completata'}
+    </button>
+  </div>`;
+}
+
+// after render, populate drive files
+function afterRenderSess(sid){
+  renderSessDriveFiles(sid);
+}
+
+// ── TIMER ──
+function updateTimerDisplay(sid){
+  const ts=timerStates[sid];if(!ts)return;
+  const el=document.getElementById(`td-${sid}`);if(!el)return;
+  const val=ts.mode==='crono'?fmtT(ts.secs):fmtMM(ts.cdLeft);
+  el.textContent=val;
+  el.className='t-disp'+(ts.running?' run':'')+(ts.mode==='cd'&&ts.cdLeft<=60&&ts.cdStarted?' urg':'');
+  const tbr=document.getElementById(`tbr-${sid}`);if(!tbr)return;
+  if(ts.running){
+    tbr.innerHTML=`<button class="t-btn tbtn-pause" onclick="pauseT('${sid}')">⏸ Pausa</button><button class="t-btn tbtn-stop" onclick="stopT('${sid}')">⏹ Salva</button><button class="t-btn tbtn-rst" onclick="resetT('${sid}')">↺</button>`;
+  } else if(ts.secs>0||ts.cdStarted){
+    tbr.innerHTML=`<button class="t-btn tbtn-go" onclick="startT('${sid}')">▶ Riprendi</button><button class="t-btn tbtn-stop" onclick="stopT('${sid}')">⏹ Salva</button><button class="t-btn tbtn-rst" onclick="resetT('${sid}')">↺</button>`;
+  } else {
+    tbr.innerHTML=`<button class="t-btn tbtn-go" onclick="startT('${sid}')">▶ Start</button><button class="t-btn tbtn-rst" onclick="resetT('${sid}')">↺ Reset</button>`;
+  }
+  // update floating timer
+  updateFloatingTimer();
+}
+function switchSTab(sid,mode){
+  const ts=timerStates[sid];if(!ts||ts.running)return;
+  ts.mode=mode;
+  document.getElementById(`tt-crono-${sid}`)?.classList.toggle('active',mode==='crono');
+  document.getElementById(`tt-cd-${sid}`)?.classList.toggle('active',mode==='cd');
+  const cdr=document.getElementById(`cdr-${sid}`);if(cdr)cdr.style.display=(mode==='cd'&&!ts.cdStarted)?'flex':'none';
+  updateTimerDisplay(sid);
+}
+function startT(sid){
+  const ts=timerStates[sid];if(!ts||ts.running)return;ts.running=true;
+  ftSid=sid;ftDayKey=curDayKey;
+  if(ts.mode==='crono'){
+    ts.interval=setInterval(()=>{ts.secs++;updateTimerDisplay(sid);updateFloatingTimer();},1000);
+  } else {
+    if(!ts.cdStarted){
+      const h=parseInt(document.getElementById(`cdh-${sid}`)?.value)||0;
+      const m=parseInt(document.getElementById(`cdm-${sid}`)?.value)||0;
+      const s=parseInt(document.getElementById(`cds-${sid}`)?.value)||0;
+      ts.cdTotal=h*3600+m*60+s;if(ts.cdTotal<=0){ts.running=false;return;}
+      ts.cdLeft=ts.cdTotal;ts.cdStarted=true;
+      const cdr=document.getElementById(`cdr-${sid}`);if(cdr)cdr.style.display='none';
+    }
+    ts.interval=setInterval(()=>{ts.cdLeft--;updateTimerDisplay(sid);updateFloatingTimer();if(ts.cdLeft<=0)stopT(sid);},1000);
+  }
+  updateTimerDisplay(sid);updateFloatingTimer();
+}
+function pauseT(sid){const ts=timerStates[sid];if(!ts)return;clearInterval(ts.interval);ts.interval=null;ts.running=false;updateTimerDisplay(sid);updateFloatingTimer();}
+function stopT(sid){
+  const ts=timerStates[sid];if(!ts)return;clearInterval(ts.interval);ts.interval=null;ts.running=false;
+  const elapsed=ts.mode==='crono'?ts.secs:(ts.cdTotal-ts.cdLeft);
+  if(elapsed>5){
+    const sess=getSess(sid);if(sess){
+      sess.totalSecs=(sess.totalSecs||0)+elapsed;
+      if(!sess.timerLogs)sess.timerLogs=[];
+      sess.timerLogs.push({time:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),secs:elapsed});
+      sv(SK.ss,sessions);
+      const slog=document.getElementById(`slog-${sid}`);
+      if(slog)slog.innerHTML=sess.timerLogs.map(l=>`<span class="slog">⏱ ${l.time} · ${fmtT(l.secs)}</span>`).join('');
+      const badge=document.getElementById(`sc-${sid}`)?.querySelector('.sess-total-badge');
+      if(badge)badge.textContent=`⏱ ${fmtT(sess.totalSecs)}`;
+      updateDayTotal();
+    }
+  }
+  if(ts.mode==='crono')ts.secs=0;else{ts.cdLeft=ts.cdTotal;ts.cdStarted=false;const cdr=document.getElementById(`cdr-${sid}`);if(cdr)cdr.style.display='flex';}
+  if(ftSid===sid)ftSid=null;
+  updateTimerDisplay(sid);updateFloatingTimer();renderStudioDays();
+}
+function resetT(sid){const ts=timerStates[sid];if(!ts)return;clearInterval(ts.interval);ts.interval=null;ts.running=false;if(ts.mode==='crono')ts.secs=0;else{ts.cdLeft=ts.cdTotal||1500;ts.cdStarted=false;const cdr=document.getElementById(`cdr-${sid}`);if(cdr)cdr.style.display='flex';}if(ftSid===sid)ftSid=null;updateTimerDisplay(sid);updateFloatingTimer();}
+function toggleSessDone(sid){const sess=getSess(sid);if(!sess)return;sess.done=!sess.done;sv(SK.ss,sessions);renderSessList();renderStudioDays();updateDayTotal();}
+function deleteSession(sid){
+  if(!confirm('Eliminare questa sessione?'))return;
+  if(timerStates[sid]){clearInterval(timerStates[sid].interval);delete timerStates[sid];}
+  if(ftSid===sid)ftSid=null;
+  sessions[curDayKey]=(sessions[curDayKey]||[]).filter(s=>s.id!==sid);
+  sv(SK.ss,sessions);renderSessList();updateDayTotal();renderStudioDays();updateFloatingTimer();
+}
+
+// ── FLOATING TIMER ──
+function updateFloatingTimer(){
+  const ft=document.getElementById('floatingTimer');
+  // find any running timer
+  let activeSid=null;
+  for(const sid of Object.keys(timerStates)){const ts=timerStates[sid];if(ts&&ts.running){activeSid=sid;break;}}
+  if(!activeSid){ft.classList.remove('visible');return;}
+  ft.classList.add('visible');
+  const ts=timerStates[activeSid];
+  const val=ts.mode==='crono'?fmtT(ts.secs):fmtMM(ts.cdLeft);
+  // find sess
+  let sessMateria='Studio';
+  for(const dk of Object.keys(sessions)){const found=sessions[dk].find(s=>s.id===activeSid);if(found){sessMateria=found.materia;break;}}
+  document.getElementById('ftIco').textContent=mIco(sessMateria);
+  document.getElementById('ftMat').textContent=sessMateria;
+  document.getElementById('ftTime').textContent=val;
+  document.getElementById('ftTime').className='ft-time run';
+  ftSid=activeSid;
+}
+function goToActiveSession(){
+  if(!ftSid)return;
+  // find dayKey
+  let dk=null;
+  for(const key of Object.keys(sessions)){if(sessions[key].find(s=>s.id===ftSid)){dk=key;break;}}
+  if(!dk)return;
+  // find gi and date
+  for(let i=0;i<WEEKS.length;i++){
+    for(let gi=0;gi<6;gi++){
+      const date=new Date(WEEKS[i]);date.setDate(WEEKS[i].getDate()+gi);
+      if(dK(date)===dk){
+        sWeekIdx=i;
+        switchPage('studio');
+        setTimeout(()=>openDayPanel(dk,gi,date.getTime()),100);
+        return;
+      }
+    }
+  }
+}
+
+// ── APPUNTI SESSIONE ──
+function fmtS(cmd,val,sid){const ed=document.getElementById(`se-${sid}`);if(!ed)return;ed.focus();document.execCommand(cmd,false,val||null);}
+function insSessImg(sid){document.getElementById(`simg-${sid}`)?.click();}
+function handleSessImg(inp,sid){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const ed=document.getElementById(`se-${sid}`);if(!ed)return;const img=document.createElement('img');img.src=e.target.result;img.style.maxWidth='100%';ed.appendChild(img);};r.readAsDataURL(f);inp.value='';}
+function saveSessNote(sid){
+  const sess=getSess(sid);if(!sess)return;
+  const ti=document.getElementById(`snt-${sid}`);const ed=document.getElementById(`se-${sid}`);if(!ti||!ed)return;
+  const title=ti.value.trim()||`Sessione ${sess.materia} — ${sess.createdAt}`;
+  const content=ed.innerHTML;
+  sess.noteTitle=title;sess.notes=content;sv(SK.ss,sessions);
+  if(title||content){
+    if(!appunti[sess.materia])appunti[sess.materia]=[];
+    const idx=appunti[sess.materia].findIndex(n=>n.sessionId===sid);
+    const note={id:idx>=0?appunti[sess.materia][idx].id:uid(),sessionId:sid,title,content,date:new Date().toLocaleDateString('it-IT'),fromSession:true,driveFiles:sess.driveFiles||[]};
+    if(idx>=0)appunti[sess.materia][idx]=note;else appunti[sess.materia].unshift(note);
+    sv(SK.ap,appunti);
+  }
+  const badge=document.getElementById(`snok-${sid}`);if(badge){badge.classList.add('show');setTimeout(()=>badge.classList.remove('show'),2500);}
+}
+
+// ══════════════════════════════════════════════════════════
+// APPUNTI
+// ══════════════════════════════════════════════════════════
+function renderMaterie(){
+  document.getElementById('mgw').classList.remove('hidden');
+  document.getElementById('noteEd').classList.remove('active');
+  const grid=document.getElementById('materieGrid');grid.innerHTML='';
+  myMat.forEach(m=>{
+    const notes=appunti[m]||[];const color=mCol(m);
+    const card=document.createElement('div');card.className='mat-card';
+    card.style.borderTop=`3px solid ${color}`;
+    card.innerHTML=`<button class="mat-del" onclick="event.stopPropagation();delMat('${m.replace(/'/g,"\\'")}')">✕</button><div class="mat-ico">${mIco(m)}</div><div class="mat-name">${esc(m)}</div><div class="mat-cnt">${notes.length} ${notes.length===1?'nota':'note'}</div>`;
+    card.onclick=()=>openMat(m);grid.appendChild(card);
+  });
+  renderQN();
+}
+function delMat(m){if(!confirm(`Eliminare "${m}"?`))return;myMat=myMat.filter(x=>x!==m);sv(SK.mat,myMat);renderMaterie();}
+function openAddMatModal(){document.getElementById('matSrch').value='';filterMatList();openOv('ovAddMat');setTimeout(()=>document.getElementById('matSrch').focus(),200);}
+function filterMatList(){
+  const q=document.getElementById('matSrch').value.trim().toLowerCase();
+  const list=document.getElementById('matPickList');list.innerHTML='';
+  const shown=ALL_MATERIE.filter(m=>!q||m.toLowerCase().includes(q));
+  if(!shown.length){list.innerHTML=`<div style="font-size:.75rem;color:var(--text3);padding:12px;">Nessuna trovata. Usa "+ Aggiungi materia personalizzata".</div>`;return;}
+  shown.forEach(m=>{
+    const already=myMat.includes(m);
+    const item=document.createElement('div');item.className='mpl-item'+(already?' already':'');
+    item.innerHTML=`<span class="mpl-name">${mIco(m)} ${esc(m)}</span>${already?'<span style="font-size:.65rem;color:var(--text3)">già presente</span>':'<span style="font-size:.7rem;color:var(--cyan)">+ Aggiungi</span>'}`;
+    if(!already)item.onclick=()=>{myMat.push(m);sv(SK.mat,myMat);closeOv('ovAddMat');renderMaterie();};
+    list.appendChild(item);
+  });
+}
+function addCustomMat(){const val=document.getElementById('matSrch').value.trim();if(!val)return;if(myMat.includes(val)){alert('Già presente!');return;}myMat.push(val);sv(SK.mat,myMat);closeOv('ovAddMat');renderMaterie();}
+function openMat(m){
+  curNoteMateria=m;curNoteId=null;
+  document.getElementById('mgw').classList.add('hidden');
+  document.getElementById('noteEd').classList.add('active');
+  document.getElementById('noteBread').textContent=m;
+  document.getElementById('noteMatT').textContent=`${mIco(m)} ${m}`;
+  document.getElementById('noteEditA').classList.remove('active');
+  document.getElementById('noteListWrap').style.display='block';
+  renderNoteList(m);
+}
+function backToMat(){document.getElementById('mgw').classList.remove('hidden');document.getElementById('noteEd').classList.remove('active');}
+function renderNoteList(m){
+  const notes=appunti[m]||[];const list=document.getElementById('noteList');list.innerHTML='';
+  if(!notes.length){list.innerHTML=`<div class="empty-state"><div class="es-ico">📝</div><div class="es-txt">Nessuna nota per ${esc(m)}.</div></div>`;return;}
+  notes.forEach((n,idx)=>{
+    const preview=(n.content||'').replace(/<[^>]+>/g,'').slice(0,80);
+    const driveBadges=(n.driveFiles||[]).map(f=>`<span class="nc-drive-badge">🗂️ ${esc(f.name)}</span>`).join('');
+    const card=document.createElement('div');card.className='note-card';
+    card.innerHTML=`<div class="nc-top"><div style="flex:1;overflow:hidden;"><div class="nc-title">${esc(n.title||'Senza titolo')}${n.fromSession?'<span class="nc-sess-tag">da sessione</span>':''}</div></div><button onclick="event.stopPropagation();delNoteByIdx(${idx})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:.9rem;padding:2px 5px;transition:color .13s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">🗑</button></div>${preview?`<div class="nc-prev">${esc(preview)}</div>`:''}<div class="nc-date">${n.date||''}</div>${driveBadges?`<div class="nc-drive-files">${driveBadges}</div>`:''}`;
+    card.onclick=()=>openNoteEdit(idx);list.appendChild(card);
+  });
+}
+function newNote(){openNoteEdit(null);}
+function openNoteEdit(idx){
+  curNoteId=idx;noteFilesM=[];noteDriveFiles=[];
+  const notes=appunti[curNoteMateria]||[];const n=idx!==null?notes[idx]:null;
+  document.getElementById('noteTitleInp').value=n?n.title||'':'';
+  document.getElementById('editorA').innerHTML=n?n.content||'':'';
+  const fc=document.getElementById('fileChipsM');fc.innerHTML='';
+  if(n?.files){noteFilesM=[...n.files];n.files.forEach(f=>{fc.innerHTML+=`<div class="file-chip">📎 <a href="${f.data}" download="${esc(f.name)}">${esc(f.name)}</a></div>`;});}
+  noteDriveFiles=n?.driveFiles?[...n.driveFiles]:[];
+  renderNoteDriveFiles();
+  document.getElementById('noteDelBtn').style.display=idx!==null?'block':'none';
+  document.getElementById('noteListWrap').style.display='none';
+  document.getElementById('noteEditA').classList.add('active');
+}
+function backToNoteList(){document.getElementById('noteEditA').classList.remove('active');document.getElementById('noteListWrap').style.display='block';renderNoteList(curNoteMateria);}
+function saveNote(){
+  const title=document.getElementById('noteTitleInp').value.trim()||'Senza titolo';
+  const content=document.getElementById('editorA').innerHTML;
+  const note={id:uid(),title,content,files:noteFilesM||[],driveFiles:noteDriveFiles||[],date:new Date().toLocaleDateString('it-IT')};
+  if(!appunti[curNoteMateria])appunti[curNoteMateria]=[];
+  if(curNoteId!==null)appunti[curNoteMateria][curNoteId]=note;else appunti[curNoteMateria].unshift(note);
+  sv(SK.ap,appunti);backToNoteList();
+}
+function deleteNote(){if(curNoteId===null)return;if(!confirm('Eliminare?'))return;appunti[curNoteMateria].splice(curNoteId,1);sv(SK.ap,appunti);backToNoteList();}
+function delNoteByIdx(idx){if(!confirm('Eliminare?'))return;appunti[curNoteMateria].splice(idx,1);sv(SK.ap,appunti);renderNoteList(curNoteMateria);}
+function fmtM(cmd,val){document.execCommand(cmd,false,val||null);}
+function insImgM(){document.getElementById('imgInpM').click();}
+function attFileM(){document.getElementById('fileInpM').click();}
+function handleImgM(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const img=document.createElement('img');img.src=e.target.result;img.style.maxWidth='100%';document.getElementById('editorA').appendChild(img);};r.readAsDataURL(f);inp.value='';}
+function handleFileM(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{noteFilesM.push({name:f.name,data:e.target.result});document.getElementById('fileChipsM').innerHTML+=`<div class="file-chip">📎 <a href="${e.target.result}" download="${esc(f.name)}">${esc(f.name)}</a></div>`;};r.readAsDataURL(f);inp.value='';}
+function addQN(){const inp=document.getElementById('qnInp'),txt=inp.value.trim();if(!txt)return;quickNotes.unshift({id:uid(),text:txt});sv(SK.qn,quickNotes);inp.value='';renderQN();}
+function renderQN(){const el=document.getElementById('qnList');if(!el)return;if(!quickNotes.length){el.innerHTML=`<div style="font-size:.72rem;color:var(--text3);padding:8px 0;">Nessuna nota veloce</div>`;return;}el.innerHTML=quickNotes.map(n=>`<div class="qn-item">${esc(n.text)}<button class="qn-del" onclick="delQN('${n.id}')">✕</button></div>`).join('');}
+function delQN(id){quickNotes=quickNotes.filter(x=>x.id!==id);sv(SK.qn,quickNotes);renderQN();}
+
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));if(document.getElementById('dayPanel').classList.contains('open'))closeDayPanel();}
+});
+let _tx=null;
+document.addEventListener('touchstart',e=>{_tx=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(_tx===null)return;const dx=e.changedTouches[0].clientX-_tx;_tx=null;
+  if(Math.abs(dx)<70)return;
+  if(document.querySelector('.overlay.open')||document.getElementById('dayPanel').classList.contains('open'))return;
+  if(curPage==='orario'){dx<0?nextWeek():prevWeek();}
+  else if(curPage==='studio'){dx<0?nextSW():prevSW();}
+},{passive:true});
+
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ══════════════════════════════════════════════════════════
+// SETTINGS & THEMES
+// ══════════════════════════════════════════════════════════
+const THEME_CLASSES=['theme-dark','theme-light','theme-dim','theme-sepia','theme-midnight'];
+const ACCENT_CLASSES=['accent-violet','accent-blue','accent-cyan','accent-green','accent-rose','accent-orange'];
+
+function setTheme(t){
+  THEME_CLASSES.forEach(c=>document.body.classList.remove(c));
+  document.body.classList.add('theme-'+t);
+  localStorage.setItem('sf_theme',t);
+  document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===t));
+}
+
+function setAccent(a){
+  ACCENT_CLASSES.forEach(c=>document.body.classList.remove(c));
+  document.body.classList.add('accent-'+a);
+  localStorage.setItem('sf_accent',a);
+  document.querySelectorAll('.accent-dot').forEach(d=>d.classList.toggle('active',d.dataset.accent===a));
+}
+
+function initTheme(){
+  const t=localStorage.getItem('sf_theme')||'dark';
+  const a=localStorage.getItem('sf_accent')||'violet';
+  setTheme(t);setAccent(a);
+}
+
+function renderSettingsPage(){
+  // school name
+  const schId=localStorage.getItem('school_v1');
+  const sch=SCUOLE.find(s=>s.id===schId);
+  const el=document.getElementById('curSchoolName');
+  if(el)el.textContent=sch?`${sch.emoji} ${sch.nome}`:'Nessuna scuola selezionata';
+  updateSettingsDrive();
+}
+
+function updateSettingsDrive(){
+  const statusEl=document.getElementById('driveSettingStatus');
+  const btnEl=document.getElementById('driveSettingBtn');
+  if(!statusEl)return;
+  if(driveConnected){statusEl.textContent='✓ Connesso';if(btnEl){btnEl.textContent='Disconnetti';btnEl.style.color='var(--red)';btnEl.style.borderColor='rgba(239,68,68,.3)';}}
+  else{statusEl.textContent='Non collegato';if(btnEl){btnEl.textContent='Connetti';btnEl.style.color='';btnEl.style.borderColor='';}}
+}
+
+function toggleAnim(){
+  const t=document.getElementById('toggleAnim');t.classList.toggle('on');
+  const reduced=t.classList.contains('on');
+  localStorage.setItem('sf_reduced_anim',reduced?'1':'0');
+  document.body.style.setProperty('--anim-dur',reduced?'0s':'.2s');
+}
+
+function exportData(){
+  const data={agenda,sessions,appunti,quickNotes,myMat,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`studyflow_backup_${new Date().toLocaleDateString('it-IT').replace(/\//g,'-')}.json`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAllData(){
+  if(!confirm('Cancellare TUTTI i dati? Questa azione è irreversibile.\n\nVerranno eliminati: orario, sessioni, appunti, note veloci.'))return;
+  agenda={};sessions={};appunti={};quickNotes=[];
+  [SK.ag,SK.ss,SK.ap,SK.qn].forEach(k=>localStorage.removeItem(k));
+  renderAgenda();renderStudioDays();renderMaterie();
+  alert('Dati cancellati.');
+}
+
+// ══════════════════════════════════════════════════════════
+// UPDATED switchPage
+// ══════════════════════════════════════════════════════════
+const _origSwitchPage=switchPage;
+// override to handle settings
+function switchPage(p){
+  curPage=p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  document.querySelectorAll('.bnav').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`bnav-${p}`).classList.add('active');
+  if(p==='orario')renderAgenda();
+  else if(p==='studio')renderStudioDays();
+  else if(p==='appunti'){renderMaterie();updateDriveUI();}
+  else if(p==='impostazioni')renderSettingsPage();
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+loadAll();
+initTheme();
+initOnboarding();
+goToday();goSToday();
+renderMaterie();updateDriveUI();
+window.addEventListener('load',()=>setTimeout(initDriveAPI,1500));
+</script>
+</body>
+</html>
